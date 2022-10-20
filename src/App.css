@@ -1,0 +1,66 @@
+header {
+  padding-top: 0px;
+}
+
+ul {
+  width: 100%;
+}
+
+.nav {
+  display: flex;
+  background-color: rgb(51, 48, 216);
+  height: 64px;
+  width: 100%;
+  position: fixed;
+}
+
+.nav-items {
+  list-style: none;
+  white-space: nowrap;
+  display: flex;
+}
+
+.tentit {
+  padding-top: 80px;
+  padding-left: 20%;
+  padding-right: 20%;
+  padding-bottom: 5%;
+}
+
+.kysymys {
+  padding: 20px;
+  border: 1px solid rgba(177, 175, 175, 0.308);
+  border-radius: 5px;
+}
+
+.vastaus {
+  padding-bottom: 10px;
+  width: 100%;
+}
+
+.vaihda {
+  border-bottom-left-radius: 4px;
+  border-top-left-radius: 4px;
+  margin-left: auto;
+}
+
+.poistu {
+  border-bottom-right-radius: 4px;
+  border-top-right-radius: 4px;
+  margin-right: 40px;
+}
+
+li {
+  height: 35px;
+  border: 1px solid white;
+}
+
+.tentteja {
+  border-bottom-left-radius: 4px;
+  border-top-left-radius: 4px;
+}
+
+.tietoa {
+  border-bottom-right-radius: 4px;
+  border-top-right-radius: 4px;
+}
