@@ -85,6 +85,7 @@ const App = () => {
   const [value, setValue] = useState([tenttiDatat.tentit[0]])
   const [vastaukset, setVastaukset] = useState(0)
   //window.localStorage.clear();
+
   useEffect(() => {
     let tenttejä = localStorage.getItem('tenttidata')
 
