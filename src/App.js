@@ -1,8 +1,10 @@
 import './App.css';
-import tenttiData from './components/TenttiData'
+//import tenttiData from './components/TenttiData'
 import Header from './components/Header'
 import Tentit from './components/Tentit'
+import Kirjaudu from './components/Kirjaudu';
 import { useState, useReducer, useEffect } from 'react'
+import axios from 'axios'
 
 function reducer(state, action) {
 
@@ -63,8 +65,42 @@ function reducer(state, action) {
       tentit9.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].valinta = true
       return tentit9
 
+    case 'LISAA_KAYTTAJA':
+      let tentit12 = { ...state, tallennetaanko: true, rekisteröidytään: false }
+      const isFound = tentit12.kayttajat.some(kayttaja => {
+        if (kayttaja.kayttajatunnus === action.payload.kayttajatunnus) {
+          return true
+        }
+        return false
+      })
+      if (isFound) {
+        alert('Käyttäjätunnus on varattu')
+        return { ...state, tallennetaanko: true }
+      }
+      tentit12.kayttajat.push({ kayttajatunnus: action.payload.kayttajatunnus, salasana: action.payload.salasana, admin: action.payload.admin })
+      return tentit12
+
+    case 'KIRJAUDU':
+      console.log('oafiejasfie')
+      let kayttaja = state.kayttajat.filter(kayttaja => kayttaja.kayttajatunnus === action.payload.kayttajatunnus && kayttaja.salasana === action.payload.salasana)
+      if (kayttaja.length === 0) {
+        console.log('sdfsadfsaf')
+        return { ...state, tallennetaanko: true }
+      }
+      let tentit13 = { ...state, kayttaja: kayttaja[0], kirjauduttu: true, tallennetaanko: true }
+      return tentit13
+
+    case 'REKISTEROIDYTAAN':
+      let tentit14 = { ...state, rekisteröidytään: true }
+      return tentit14
+
+    case 'POISTU':
+      let tentit15 = { ...state, kirjauduttu: false, tallennetaanko: true }
+      return tentit15
+
     case 'ALUSTA_DATA':
-      return { ...action.payload, tietoAlustettu: true }
+      action.payload.setValue(action.payload.data.tentit)
+      return { ...action.payload.data, tietoAlustettu: true }
 
     case 'PAIVITA_TALLENNUSTILA':
       return { ...state, tallennetaanko: action.payload }
@@ -81,30 +117,40 @@ function reducer(state, action) {
 }
 
 const App = () => {
-  const [tenttiDatat, dispatch] = useReducer(reducer, tenttiData)
-  const [value, setValue] = useState([tenttiDatat.tentit[0]])
+  const [tenttiDatat, dispatch] = useReducer(reducer, {})
+  const [value, setValue] = useState({})
   const [vastaukset, setVastaukset] = useState(0)
   //window.localStorage.clear();
 
   useEffect(() => {
-    let tenttejä = localStorage.getItem('tenttidata')
-
-    if (tenttejä === null) {
-      localStorage.setItem('tenttidata', JSON.stringify(tenttiData))
-      dispatch({ type: 'ALUSTA_DATA', payload: tenttiData })
-      console.log('data luettiin vakiosta')
-      setValue([tenttiData.tentit[0]])
-    } else {
-      dispatch({ type: 'ALUSTA_DATA', payload: JSON.parse(tenttejä) })
-      console.log('data luettiin local storagesta')
-      setValue([JSON.parse(tenttejä).tentit[0]])
+    try {
+      const getData = async () => {
+        const result = await axios.get('http://localhost:8080');
+        //console.log('data', result.data.data.tentit)
+        dispatch({ type: "ALUSTA_DATA", payload: { data: result.data.data, setValue: setValue } })
+      }
+      getData()
+    } catch (error) {
+      console.log("virhetilanne:", error)
     }
+
   }, [])
 
   useEffect(() => {
+
+    const saveData = async () => {
+
+      try {
+        await axios.post('http://localhost:8080', {
+          data: tenttiDatat
+        })
+        dispatch({ type: 'PAIVITA_TALLENNUSTILA', payload: false })
+      } catch (error) {
+        console.log("virhetilanne:", error)
+      }
+    }
     if (tenttiDatat.tallennetaanko === true) {
-      localStorage.setItem('tenttidata', JSON.stringify(tenttiDatat))
-      dispatch({ type: 'PAIVITA_TALLENNUSTILA', payload: false })
+      saveData()
     }
   }, [tenttiDatat])
 
@@ -117,22 +163,21 @@ const App = () => {
     setVastaukset(1)
   }
 
-  const kayttajaVaihto = () => {
-    dispatch({ type: 'PAIVITA_KAYTTAJA', payload: tenttiDatat.kayttaja * -1 })
-  }
-
   return (
     <div>
-      {tenttiDatat.tietoAlustettu && <Header kayttajaVaihto={kayttajaVaihto} tenttiDatat={tenttiDatat} />}
-      {tenttiDatat.tietoAlustettu && <Tentit
+      {tenttiDatat.tietoAlustettu && <Header dispatch={dispatch} kirjauduttu={tenttiDatat.kirjauduttu} />}
+      {tenttiDatat.tietoAlustettu && tenttiDatat.kirjauduttu && <Tentit
         tentit={tenttiDatat.tentit}
         value={value}
         setToValue={setToValue}
         dispatch={dispatch}
         onClick={oikeatVastaukset}
         vastaukset={vastaukset}
-        kayttaja={tenttiDatat.kayttaja}
+        kayttaja={tenttiDatat.kayttaja.admin}
       />}
+      <div className='kirjaudu'>
+        {!tenttiDatat.kirjauduttu && <Kirjaudu dispatch={dispatch} rekisteröidytään={tenttiDatat.rekisteröidytään} />}
+      </div>
     </div>
   );
 }
