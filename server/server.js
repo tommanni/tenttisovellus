@@ -24,10 +24,10 @@ app.get('/', (req, res) => {
             let tenttiData = await pool.query("SELECT * FROM exam ORDER BY id")
             let tentit = tenttiData.rows
             for (let i = 0; i < tentit.length; i++) {
-                let kysymykset = await pool.query("SELECT id, kysymys FROM question WHERE fk_exam_id = ($1)", [Number(tentit[i].id)])
+                let kysymykset = await pool.query("SELECT id, kysymys FROM question WHERE fk_exam_id = ($1) ORDER BY id", [Number(tentit[i].id)])
                 tentit[i].kysymykset = kysymykset.rows
                 for (let j = 0; j < tentit[i].kysymykset.length; j++) {
-                    let vastaukset = await pool.query("SELECT id, vastaus, oikein, valinta FROM answer WHERE question_id = ($1)", [Number(tentit[i].kysymykset[j].id)])
+                    let vastaukset = await pool.query("SELECT id, vastaus, oikein, valinta FROM answer WHERE question_id = ($1) ORDER BY id", [Number(tentit[i].kysymykset[j].id)])
                     tentit[i].kysymykset[j].vastaukset = vastaukset.rows
                     //console.log('dsfs', tentit[i].kysymykset[j].vastaukset)
                 }
@@ -64,17 +64,25 @@ app.post('/', (req, res) => {
 
 app.post('/lisaa-tentti', (req, res) => {
     const lisaaTentti = async () => {
-        await pool.query("INSERT INTO exam (id, nimi) OVERRIDING SYSTEM VALUE VALUES ((SELECT MAX(id) + 1 FROM EXAM), 'UUSI TENTTI')")
+        await pool.query("INSERT INTO exam (id, nimi, voimassa) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM EXAM), 1), '', false)")
     }
     lisaaTentti()
     res.send('hello world')
 })
 
 app.post('/lisaa-kysymys', (req, res) => {
-    const lisaaTentti = async () => {
-        await pool.query("INSERT INTO question (id, fk_exam_id, kysymys) OVERRIDING SYSTEM VALUE VALUES ((SELECT MAX(id) + 1 FROM question), ($1), 'UUSI KYSYMYS')", [req.body.tenttiIndex])
+    const lisaaKysymys = async () => {
+        await pool.query("INSERT INTO question (id, fk_exam_id, kysymys) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM question), 1), ($1), '')", [req.body.tenttiIndex])
     }
-    lisaaTentti()
+    lisaaKysymys()
+    res.send('hello world')
+})
+
+app.post('/lisaa-vastaus', (req, res) => {
+    const lisaaVastaus = async () => {
+        await pool.query("INSERT INTO answer (id, question_id, vastaus, oikein, valinta) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM answer), 1), ($1), '', false, false)", [req.body.kysymysId])
+    }
+    lisaaVastaus()
     res.send('hello world')
 })
 
@@ -88,7 +96,7 @@ app.put('/tentin-nimi-muuttui', (req, res) => {
 
 app.put('/kysymyksen-nimi-muuttui', (req, res) => {
     const muutaKysymyksenNimi = async () => {
-        console.log(req.body.kysymysId)
+        console.log(req.body)
         await pool.query('UPDATE question SET kysymys = ($1) WHERE fk_exam_id = ($2) AND id = ($3)', [req.body.nimi, req.body.tenttiId, req.body.kysymysId])
     }
     res.send('hello world')
@@ -168,6 +176,31 @@ app.post('/rekisteroidytaan', (req, res) => {
         }
     }
     rekisteröidytään()
+})
+
+app.put('/muuta-voimassa', (req, res) => {
+    const muutaVoimassa = async () => {
+        try {
+            await pool.query('UPDATE exam SET voimassa = false WHERE id = ($1)', [req.body.vanhaTenttiId])
+            await pool.query('UPDATE exam SET voimassa = true WHERE id = ($1)', [req.body.tenttiId])
+        } catch (err) {
+            console.log(err)
+        }
+    }
+    res.send('Hello world')
+    muutaVoimassa()
+})
+
+app.put('/vastaus-oikein', (req, res) => {
+    const vaihdaOikein = async () => {
+        try {
+            await pool.query('UPDATE answer SET oikein = ($1) WHERE id = ($2)', [req.body.oikein, req.body.vastausId])
+        } catch (err) {
+            console.log(err)
+        }
+    }
+    res.send('Hello world')
+    vaihdaOikein()
 })
 
 app.listen(port, () => {
