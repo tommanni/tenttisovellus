@@ -12,11 +12,13 @@ function reducer(state, action) {
 
     case "TENTIN_NIMI_MUUTTUI":
       let tentit1 = { ...state, tallennetaanko: true, method: "TNMuuttui", idList: [action.payload.tentinId, action.payload.nimi] }
+      console.log(tentit1.tentit[action.payload.tentinIndex])
       tentit1.tentit[action.payload.tentinIndex].nimi = action.payload.nimi
       return tentit1
 
     case "KYSYMYKSEN_NIMI_MUUTTUI":
       let tentit2 = { ...state, tallennetaanko: true, method: "KNMuuttui", idList: [action.payload.tenttiId, action.payload.kysymysId, action.payload.nimi] }
+      console.log(action.payload)
       tentit2.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].kysymys = action.payload.nimi
       return tentit2
 
@@ -37,29 +39,42 @@ function reducer(state, action) {
 
     case 'LISAA_TENTTI':
       let tentit10 = { ...state, tallennetaanko: true, method: 'LTentti' }
-      let idList = tentit10.tentit.map(tentti => tentti.id)
-      tentit10.tentit.push({ nimi: 'UUSI TENTTI', id: Math.max(idList) + 1, kysymykset: [] })
+      let idList = tentit10.tentit.map(tentti => Number(tentti.id))
+      tentit10.tentit.push({ nimi: '', id: idList.length === 0 ? 1 : Math.max(...idList) + 1, kysymykset: [] })
+      console.log(tentit10.tentit)
       return tentit10
 
     case 'POISTA_TENTTI':
       let tentit11 = { ...state, tallennetaanko: true, method: 'PTentti', idList: [action.payload.tenttiId] }
+      action.payload.setValue({})
       tentit11.tentit = tentit11.tentit.filter(tentti => tentti.id !== action.payload.tenttiId)
       return tentit11
 
     case 'LISAA_KYSYMYS':
       let tentit6 = { ...state, tallennetaanko: true, method: 'LKysymys', idList: [state.tentit[action.payload].id] }
-      let idList2 = tentit6.tentit[action.payload].kysymykset.map(kysymys => kysymys.id)
-      tentit6.tentit[action.payload].kysymykset.push({ kysymys: "", id: Math.max(idList2) + 1, vastaukset: [] })
+      let idList2 = []
+      for (let i = 0; i < tentit6.tentit.length; i++) {
+        tentit6.tentit[i].kysymykset.map(kysymys => idList2.push(kysymys.id))
+      }
+      tentit6.tentit[action.payload].kysymykset.push({ kysymys: "", id: Math.max(...idList2) + 1, vastaukset: [] })
       return tentit6
 
     case 'LISAA_VASTAUS':
-      let tentit7 = { ...state, tallennetaanko: true }
-      tentit7.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset.push({ id: action.payload.id, vastaus: "", oikein: false, valinta: false })
+      console.log(action.payload.kysymysId)
+      let tentit7 = { ...state, tallennetaanko: true, method: 'LVastaus', idList: [action.payload.kysymysId] }
+      let idList3 = []
+      for (let i = 0; i < tentit7.tentit.length; i++) {
+        for (let j = 0; j < tentit7.tentit[i].kysymykset.length; j++) {
+          tentit7.tentit[i].kysymykset[j].vastaukset.map(vastaus => idList3.push(vastaus.id))
+        }
+      }
+      tentit7.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset.push({ id: Math.max(...idList3) + 1, vastaus: "", oikein: false, valinta: false })
       return tentit7
 
     case 'KYSYMYS_OIKEIN':
-      let tentit8 = { ...state, tallennetaanko: true }
-      tentit8.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].oikein = !tentit8.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].oikein
+      let oikein = !state.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].oikein
+      let tentit8 = { ...state, tallennetaanko: true, method: 'VOikein', idList: [action.payload.vastausId, oikein] }
+      tentit8.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].oikein = oikein
       return tentit8
 
     case 'ASETA_VALINTA':
@@ -104,7 +119,9 @@ function reducer(state, action) {
       return tentit15
 
     case 'ALUSTA_DATA':
-      action.payload.setValue(action.payload.data.tentit)
+      if (action.payload.data.tentit.find(tentti => tentti.voimassa === true) !== undefined) {
+        action.payload.setValue([action.payload.data.tentit.find(tentti => tentti.voimassa === true)])
+      }
       return { ...action.payload.data, tietoAlustettu: true }
 
     case 'PAIVITA_TALLENNUSTILA':
@@ -132,14 +149,12 @@ const App = () => {
       const getData = async () => {
         const result = await axios.get('http://localhost:8080');
         console.log(result.data)
-        //console.log('data', result.data.data.tentit)
         dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
       }
       getData()
     } catch (error) {
       console.log("virhetilanne:", error)
     }
-
   }, [])
 
   useEffect(() => {
@@ -203,7 +218,18 @@ const App = () => {
           break
 
         case 'LVastaus':
+          const lisaaVastaus = async (kysymysId) => {
+            await axios.post('http://localhost:8080/lisaa-vastaus', { kysymysId: kysymysId })
+          }
+          lisaaVastaus(tenttiDatat.idList[0])
+          break
 
+        case 'VOikein':
+          const vaihdaOikein = async (vastausId, oikein) => {
+            await axios.put('http://localhost:8080/vastaus-oikein', { vastausId: vastausId, oikein: oikein })
+          }
+          vaihdaOikein(tenttiDatat.idList[0], tenttiDatat.idList[1])
+          break
 
         default:
           break
@@ -214,8 +240,12 @@ const App = () => {
     }
   }, [tenttiDatat])
 
-  const setToValue = (newValue) => {
-    setValue(newValue)
+  const setToValue = (tenttiId) => {
+    const muutaVoimassa = async () => {
+      await axios.put('http://localhost:8080/muuta-voimassa', { tenttiId: tenttiId, vanhaTenttiId: Object.keys(value[0]).length !== 0 ? value[0].id : 0 })
+    }
+    muutaVoimassa()
+    setValue([tenttiDatat.tentit.find(tentti => tentti.id === tenttiId)])
     setVastaukset(0)
   }
 
@@ -230,6 +260,7 @@ const App = () => {
         tentit={tenttiDatat.tentit}
         value={value}
         setToValue={setToValue}
+        setValue={setValue}
         dispatch={dispatch}
         onClick={oikeatVastaukset}
         vastaukset={vastaukset}
