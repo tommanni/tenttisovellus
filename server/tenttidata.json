@@ -2,76 +2,64 @@
   "data": {
     "tentit": [
       {
-        "nimi": "Javascriptin perusteet",
-        "id": 1,
+        "id": "1",
+        "nimi": "Kotlinin persd",
         "kysymykset": [
           {
-            "kysymys": "Mitä muuttujan näkyvyysalue tarkoittaa?",
-            "id": 1,
+            "id": "2",
+            "kysymys": "Miksi on kotlin",
             "vastaukset": [
               {
-                "id": 1,
-                "vastaus": "Sitä, kuinka kaukaa muuttuja näkyy ilman kaukoputkea tai kiikareita",
-                "oikein": false,
-                "valinta": false
-              },
-              {
-                "id": 2,
-                "vastaus": "Sitä, missä kohtaa ohjelmaa muuttujaa voi käyttää",
+                "id": "1",
+                "vastaus": "jsut sen takii",
                 "oikein": true,
                 "valinta": false
               },
               {
-                "id": 3,
-                "vastaus": "Sitä, miten helppo muuttujien käyttöä on synkronoida säikeiden kesken",
+                "id": "2",
+                "vastaus": "en tiedä!",
+                "oikein": false,
+                "valinta": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "nimi": "javascriptin perusteet",
+        "kysymykset": [
+          {
+            "id": "6",
+            "kysymys": "Onko JavaScript",
+            "vastaukset": [
+              {
+                "id": "7",
+                "vastaus": "ei ole mun asia tietää tommosia",
+                "oikein": true,
+                "valinta": false
+              },
+              {
+                "id": "8",
+                "vastaus": "jaa a",
                 "oikein": false,
                 "valinta": false
               }
             ]
           },
           {
-            "kysymys": "Luokkien hyvä puoli on, että",
-            "id": 2,
+            "id": "5",
+            "kysymys": "Mikä on javascript",
             "vastaukset": [
               {
-                "id": 1,
-                "vastaus": "Niiden avulla koodia on helpompi moduloida",
-                "oikein": true,
-                "valinta": false
-              },
-              {
-                "id": 2,
-                "vastaus": "Niiden avulla on helppo uudelleenkäyttää ohjelmakoodia",
-                "oikein": true,
-                "valinta": false
-              },
-              {
-                "id": 3,
-                "vastaus": "Niiden avulla on helppo kirjoittaa monisäikeisiä sovelluksia",
+                "id": "5",
+                "vastaus": "No en tiedä",
                 "oikein": false,
                 "valinta": false
-              }
-            ]
-          },
-          {
-            "kysymys": "Nuolifunktiot ovat käteviä koska",
-            "id": 3,
-            "vastaukset": [
-              {
-                "id": 1,
-                "vastaus": "Ne helpottavat korkeamman asteen funktioiden hyödyntämistä",
-                "oikein": true,
-                "valinta": false
               },
               {
-                "id": 2,
-                "vastaus": "Ne tukevat funktionaalista ohjelmointityyliä",
-                "oikein": true,
-                "valinta": false
-              },
-              {
-                "id": 3,
-                "vastaus": "Niiden avulla on helppoa luoda paikallisia nimettömiä funktioita",
+                "id": "6",
+                "vastaus": "miks multa kysyt",
                 "oikein": true,
                 "valinta": false
               }
@@ -80,124 +68,65 @@
         ]
       },
       {
-        "nimi": "Firsbeegolfin perusteet",
-        "id": 2,
+        "id": "3",
+        "nimi": "pythonin perusteet",
         "kysymykset": [
           {
-            "kysymys": "Mikä kiekko kannattaa valita 10 metrin etäisyydeltä korista?",
-            "id": 1,
+            "id": "8",
+            "kysymys": "Mikä on Python",
             "vastaukset": [
               {
-                "id": 1,
-                "vastaus": "Putteri",
+                "id": "9",
+                "vastaus": "siinä onki mietittävää",
+                "oikein": false,
+                "valinta": false
+              },
+              {
+                "id": "11",
+                "vastaus": "ole hiljaa",
                 "oikein": true,
-                "valinta": false
-              },
-              {
-                "id": 2,
-                "vastaus": "Midrange",
-                "oikein": false,
-                "valinta": false
-              },
-              {
-                "id": 3,
-                "vastaus": "Driveri",
-                "oikein": false,
                 "valinta": false
               }
             ]
           },
-          {
-            "kysymys": "Mitkä ovat firsbeenheittotyylejä?",
-            "id": 2,
-            "vastaukset": [
-              {
-                "id": 1,
-                "vastaus": "Forehand",
-                "oikein": true,
-                "valinta": false
-              },
-              {
-                "id": 2,
-                "vastaus": "Backhand",
-                "oikein": true,
-                "valinta": false
-              },
-              {
-                "id": 3,
-                "vastaus": "Uppercut",
-                "oikein": false,
-                "valinta": false
-              }
-            ]
-          },
-          {
-            "kysymys": "Mikä on frisbeeheiton pituusennätys?",
-            "id": 3,
-            "vastaukset": [
-              {
-                "id": 1,
-                "vastaus": "338 metriä",
-                "oikein": true,
-                "valinta": false
-              },
-              {
-                "id": 2,
-                "vastaus": "167 kilometriä",
-                "oikein": false,
-                "valinta": false
-              },
-              {
-                "id": 3,
-                "vastaus": "18 senttimetriä",
-                "oikein": false,
-                "valinta": false
-              }
-            ]
-          },
-          {
-            "kysymys": "Paljon painaa täysipainoinen driver",
-            "id": 4,
-            "vastaukset": [
-              {
-                "id": 1,
-                "vastaus": "4 kiloa",
-                "oikein": false,
-                "valinta": false
-              },
-              {
-                "id": 2,
-                "vastaus": "175 grammaa",
-                "oikein": true,
-                "valinta": false
-              },
-              {
-                "id": 3,
-                "vastaus": "100 grammaa",
-                "oikein": false,
-                "valinta": false
-              }
-            ]
-          }
+          { "id": "9", "kysymys": "Onko Python", "vastaukset": [] }
         ]
       }
     ],
     "tallennetaanko": true,
     "tietoAlustettu": true,
+    "kayttajat": [
+      {
+        "id": "3",
+        "kayttajatunnus": "matti",
+        "salasana": "koivisto",
+        "admin": -1,
+        "kirjauduttu": false
+      },
+      {
+        "id": "2",
+        "kayttajatunnus": "harri",
+        "salasana": "hakkeri",
+        "admin": -1,
+        "kirjauduttu": false
+      },
+      {
+        "id": "1",
+        "kayttajatunnus": "kalle",
+        "salasana": "koodaaja",
+        "admin": 1,
+        "kirjauduttu": true
+      }
+    ],
+    "naytaVastaukset": false,
+    "rekisteröidytään": false,
     "kayttaja": {
+      "id": "1",
       "kayttajatunnus": "kalle",
       "salasana": "koodaaja",
-      "admin": 1
+      "admin": 1,
+      "kirjauduttu": true
     },
-    "naytaVastaukset": false,
-    "kayttajat": [
-      { "kayttajatunnus": "tomi", "salasana": "manninen", "admin": -1 },
-      { "kayttajatunnus": "kalle", "salasana": "koodaaja", "admin": 1 },
-      { "kayttajatunnus": "olli", "salasana": "ohjelmoija", "admin": -1 },
-      { "kayttajatunnus": "Matti", "salasana": "meikäläinen", "admin": -1 },
-      { "kayttajatunnus": "teuvo", "salasana": "teikäläinen", "admin": -1 }
-    ],
-    "kirjauduttu": false,
-    "rekisteröidytään": false
+    "kirjauduttu": true
   }
 }
