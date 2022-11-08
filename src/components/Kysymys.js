@@ -32,7 +32,7 @@ const Kysymys = ({ kysymys, kysymysNimi, dispatch, tenttiId, vastaukset, kayttaj
                 </Button>}
             </p>
             {kysymys.vastaukset.map((vastaus, index) =>
-                <div key={index} className='vastaus'>
+                <div key={vastaus.id} className='vastaus'>
 
                     {kayttaja === -1 && vastaukset === 1 ? <Checkbox color="default" checked={!vastaus.valinta} disableRipple /> : kayttaja === -1 && <Checkbox color="default" onClick={() => dispatch({
                         type: 'ASETA_VALINTA',
@@ -49,6 +49,7 @@ const Kysymys = ({ kysymys, kysymysNimi, dispatch, tenttiId, vastaukset, kayttaj
                                 type: 'KYSYMYS_OIKEIN',
                                 payload: {
                                     tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
+                                    vastausId: vastaus.id,
                                     kysymysIndex: kysymysIndex,
                                     vastausIndex: index
                                 }
@@ -87,6 +88,7 @@ const Kysymys = ({ kysymys, kysymysNimi, dispatch, tenttiId, vastaukset, kayttaj
                 payload: {
                     tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
                     kysymysIndex: kysymysIndex,
+                    kysymysId: kysymys.id,
                     id: kysymys.vastaukset.length + 1
                 }
             })}>LISÄÄ VASTAUS</Button>}
