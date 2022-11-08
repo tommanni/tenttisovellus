@@ -11,43 +11,45 @@ function reducer(state, action) {
   switch (action.type) {
 
     case "TENTIN_NIMI_MUUTTUI":
-      let tentit1 = { ...state, tallennetaanko: true }
+      let tentit1 = { ...state, tallennetaanko: true, method: "TNMuuttui", idList: [action.payload.tentinId, action.payload.nimi] }
       tentit1.tentit[action.payload.tentinIndex].nimi = action.payload.nimi
       return tentit1
 
     case "KYSYMYKSEN_NIMI_MUUTTUI":
-      let tentit2 = { ...state, tallennetaanko: true }
+      let tentit2 = { ...state, tallennetaanko: true, method: "KNMuuttui", idList: [action.payload.tenttiId, action.payload.kysymysId, action.payload.nimi] }
       tentit2.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].kysymys = action.payload.nimi
       return tentit2
 
     case "VASTAUKSEN_NIMI_MUUTTUI":
-      let tentit3 = { ...state, tallennetaanko: true }
+      let tentit3 = { ...state, tallennetaanko: true, method: "VNMuuttui", idList: [action.payload.kysymysId, action.payload.vastausId, action.payload.nimi] }
       tentit3.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].vastaus = action.payload.nimi
       return tentit3
     //Poistetaan kysymys filtteröimällä se pois
     case 'POISTA_KYSYMYS':
-      let tentit4 = { ...state, tallennetaanko: true }
+      let tentit4 = { ...state, tallennetaanko: true, method: 'PKysymys', idList: [action.payload.tenttiId, action.payload.kysymys, state.kayttaja.id] }
       tentit4.tentit[action.payload.tenttiIndex].kysymykset = tentit4.tentit[action.payload.tenttiIndex].kysymykset.filter(kysymys => kysymys.kysymys !== action.payload.kysymys)
       return tentit4
     //Poistetaan vastaus filtteröimällä se pois
     case 'POISTA_VASTAUS':
-      let tentit5 = { ...state, tallennetaanko: true }
+      let tentit5 = { ...state, tallennetaanko: true, method: 'PVastaus', idList: [action.payload.kysymysId, action.payload.vastaus, state.kayttaja.id] }
       tentit5.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset = tentit5.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset.filter(vastaus => vastaus.vastaus !== action.payload.vastaus)
       return tentit5
 
     case 'LISAA_TENTTI':
-      let tentit10 = { ...state, tallennetaanko: true }
-      tentit10.tentit.push({ nimi: 'UUSI TENTTI', id: tentit10.tentit.length + 1, kysymykset: [] })
+      let tentit10 = { ...state, tallennetaanko: true, method: 'LTentti' }
+      let idList = tentit10.tentit.map(tentti => tentti.id)
+      tentit10.tentit.push({ nimi: 'UUSI TENTTI', id: Math.max(idList) + 1, kysymykset: [] })
       return tentit10
 
     case 'POISTA_TENTTI':
-      let tentit11 = { ...state, tallennetaanko: true }
-      tentit11.tentit = tentit11.tentit.filter(tentti => tentti.nimi !== action.payload)
+      let tentit11 = { ...state, tallennetaanko: true, method: 'PTentti', idList: [action.payload.tenttiId] }
+      tentit11.tentit = tentit11.tentit.filter(tentti => tentti.id !== action.payload.tenttiId)
       return tentit11
 
     case 'LISAA_KYSYMYS':
-      let tentit6 = { ...state, tallennetaanko: true }
-      tentit6.tentit[action.payload].kysymykset.push({ kysymys: "", id: tentit6.tentit[action.payload].kysymykset.length + 1, vastaukset: [] })
+      let tentit6 = { ...state, tallennetaanko: true, method: 'LKysymys', idList: [state.tentit[action.payload].id] }
+      let idList2 = tentit6.tentit[action.payload].kysymykset.map(kysymys => kysymys.id)
+      tentit6.tentit[action.payload].kysymykset.push({ kysymys: "", id: Math.max(idList2) + 1, vastaukset: [] })
       return tentit6
 
     case 'LISAA_VASTAUS':
@@ -78,24 +80,27 @@ function reducer(state, action) {
         return { ...state, tallennetaanko: true }
       }
       tentit12.kayttajat.push({ kayttajatunnus: action.payload.kayttajatunnus, salasana: action.payload.salasana, admin: action.payload.admin })
+      axios.post('http://localhost:8080/rekisteroidytaan', { data: false })
       return tentit12
 
     case 'KIRJAUDU':
-      console.log('oafiejasfie')
       let kayttaja = state.kayttajat.filter(kayttaja => kayttaja.kayttajatunnus === action.payload.kayttajatunnus && kayttaja.salasana === action.payload.salasana)
       if (kayttaja.length === 0) {
-        console.log('sdfsadfsaf')
+        alert('Nimessä tai salasanassa on virhe')
         return { ...state, tallennetaanko: true }
       }
+      axios.post('http://localhost:8080/kirjaudu', { data: kayttaja[0] })
       let tentit13 = { ...state, kayttaja: kayttaja[0], kirjauduttu: true, tallennetaanko: true }
       return tentit13
 
     case 'REKISTEROIDYTAAN':
       let tentit14 = { ...state, rekisteröidytään: true }
+      axios.post('http://localhost:8080/rekisteroidytaan', { data: true })
       return tentit14
 
     case 'POISTU':
       let tentit15 = { ...state, kirjauduttu: false, tallennetaanko: true }
+      axios.post('http://localhost:8080/poistu')
       return tentit15
 
     case 'ALUSTA_DATA':
@@ -126,8 +131,9 @@ const App = () => {
     try {
       const getData = async () => {
         const result = await axios.get('http://localhost:8080');
+        console.log(result.data)
         //console.log('data', result.data.data.tentit)
-        dispatch({ type: "ALUSTA_DATA", payload: { data: result.data.data, setValue: setValue } })
+        dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
       }
       getData()
     } catch (error) {
@@ -139,14 +145,68 @@ const App = () => {
   useEffect(() => {
 
     const saveData = async () => {
+      switch (tenttiDatat.method) {
+        case 'TNMuuttui':
+          const muutaTentinNimi = async (tenttiId, nimi) => {
+            await axios.put('http://localhost:8080/tentin-nimi-muuttui', { tenttiId: tenttiId, nimi: nimi })
+          }
+          muutaTentinNimi(tenttiDatat.idList[0], tenttiDatat.idList[1])
+          break
 
-      try {
-        await axios.post('http://localhost:8080', {
-          data: tenttiDatat
-        })
-        dispatch({ type: 'PAIVITA_TALLENNUSTILA', payload: false })
-      } catch (error) {
-        console.log("virhetilanne:", error)
+        case 'KNMuuttui':
+          const muutaKysymyksenNimi = async (tenttiId, kysymysId, nimi) => {
+            await axios.put('http://localhost:8080/kysymyksen-nimi-muuttui', { tenttiId: tenttiId, kysymysId: kysymysId, nimi: nimi })
+          }
+          muutaKysymyksenNimi(tenttiDatat.idList[0], tenttiDatat.idList[1], tenttiDatat.idList[2])
+          break
+
+        case 'VNMuuttui':
+          const muutaVastauksenNimi = async (kysymysId, vastausId, nimi) => {
+            await axios.put('http://localhost:8080/vastauksen-nimi-muuttui', { kysymysId: kysymysId, vastausId: vastausId, nimi: nimi })
+          }
+          muutaVastauksenNimi(tenttiDatat.idList[0], tenttiDatat.idList[1], tenttiDatat.idList[2])
+          break
+
+        case 'PTentti':
+          const poistaTentti = async (tenttiId) => {
+            await axios.delete('http://localhost:8080/poista-tentti', { data: { tenttiId: tenttiId } })
+          }
+          poistaTentti(tenttiDatat.idList[0])
+          break
+
+        case 'PKysymys':
+          const poistaKysymys = async (tenttiId, kysymys, userId) => {
+            await axios.delete('http://localhost:8080/poista-kysymys', { data: { tenttiId: tenttiId, kysymys: kysymys, userId: userId } })
+          }
+          poistaKysymys(tenttiDatat.idList[0], tenttiDatat.idList[1], tenttiDatat.idList[2])
+          break
+
+        case 'PVastaus':
+          const poistaVastaus = async (kysymysId, vastaus, userId) => {
+            await axios.delete('http://localhost:8080/poista-vastaus', { data: { kysymysId: kysymysId, vastaus: vastaus, userId: userId } })
+          }
+          poistaVastaus(tenttiDatat.idList[0], tenttiDatat.idList[1], tenttiDatat.idList[2])
+          break
+
+        case 'LTentti':
+          const lisaaTentti = async () => {
+            await axios.post('http://localhost:8080/lisaa-tentti')
+          }
+          lisaaTentti()
+          break
+
+        case 'LKysymys':
+          const lisaaKysymys = async (tenttiIndex) => {
+            await axios.post('http://localhost:8080/lisaa-kysymys', { tenttiIndex: tenttiIndex })
+          }
+          lisaaKysymys(tenttiDatat.idList[0])
+          break
+
+        case 'LVastaus':
+
+
+        default:
+          break
       }
     }
     if (tenttiDatat.tallennetaanko === true) {
@@ -183,3 +243,14 @@ const App = () => {
 }
 
 export default App
+
+
+
+/* try {
+  await axios.post('http://localhost:8080', {
+    data: tenttiDatat
+  })
+  dispatch({ type: 'PAIVITA_TALLENNUSTILA', payload: false })
+} catch (error) {
+  console.log("virhetilanne:", error)
+} */
