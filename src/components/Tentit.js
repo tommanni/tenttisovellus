@@ -15,13 +15,14 @@ const Tentit = ({ tentit, value, setToValue, dispatch, vastaukset, onClick, kayt
                             type: "TENTIN_NIMI_MUUTTUI",
                             payload: {
                                 nimi: event.target.value,
-                                tentinIndex: tentti.id - 1,
+                                tentinIndex: tentit.findIndex(tentti1 => tentti1.id === tentti.id),
+                                tentinId: tentti.id
                             }
                         })
                     }} /> : ""}
                     {kayttaja === 1 ? <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => dispatch({
                         type: 'POISTA_TENTTI',
-                        payload: tentti.nimi
+                        payload: { nimi: tentti.nimi, tenttiId: tentti.id }
                     })} /> : ""}
                 </>
             )
@@ -44,7 +45,7 @@ const Tentit = ({ tentit, value, setToValue, dispatch, vastaukset, onClick, kayt
                 onClick={onClick}>NÄYTÄ VASTAUKSET
             </Button> : <Button startIcon={<AddCircleIcon />} style={{ color: '#fff' }} onClick={() => dispatch({
                 type: 'LISAA_KYSYMYS',
-                payload: value[0].id - 1
+                payload: tentit.findIndex(tentti1 => tentti1.id === value[0].id)
             })}>LISÄÄ KYSYMYS</Button>}
         </div>
     )

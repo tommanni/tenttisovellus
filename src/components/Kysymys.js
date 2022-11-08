@@ -13,16 +13,19 @@ const Kysymys = ({ kysymys, kysymysNimi, dispatch, tenttiId, vastaukset, kayttaj
                     type: "KYSYMYKSEN_NIMI_MUUTTUI",
                     payload: {
                         nimi: event.target.value,
-                        tenttiIndex: tenttiId - 1,
-                        kysymysIndex: kysymysIndex
+                        tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
+                        tenttiId: tenttiId,
+                        kysymysIndex: kysymysIndex,
+                        kysymysId: kysymys.id
                     }
                 })
             }} />}
                 {kayttaja === 1 && <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} className='poista-kysymys' onClick={() => dispatch({
                     type: 'POISTA_KYSYMYS',
                     payload: {
-                        tenttiIndex: tenttiId - 1,
+                        tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
                         kysymys: kysymys.kysymys,
+                        tenttiId: tenttiId
                     }
                 })} >
 
@@ -34,7 +37,7 @@ const Kysymys = ({ kysymys, kysymysNimi, dispatch, tenttiId, vastaukset, kayttaj
                     {kayttaja === -1 && vastaukset === 1 ? <Checkbox color="default" checked={!vastaus.valinta} disableRipple /> : kayttaja === -1 && <Checkbox color="default" onClick={() => dispatch({
                         type: 'ASETA_VALINTA',
                         payload: {
-                            tenttiIndex: tenttiId - 1,
+                            tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
                             kysymysIndex: kysymysIndex,
                             vastausIndex: index
                         }
@@ -45,7 +48,7 @@ const Kysymys = ({ kysymys, kysymysNimi, dispatch, tenttiId, vastaukset, kayttaj
                             : kayttaja === 1 ? <Checkbox color="default" defaultChecked={vastaus.oikein} onClick={() => dispatch({
                                 type: 'KYSYMYS_OIKEIN',
                                 payload: {
-                                    tenttiIndex: tenttiId - 1,
+                                    tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
                                     kysymysIndex: kysymysIndex,
                                     vastausIndex: index
                                 }
@@ -57,9 +60,11 @@ const Kysymys = ({ kysymys, kysymysNimi, dispatch, tenttiId, vastaukset, kayttaj
                             type: "VASTAUKSEN_NIMI_MUUTTUI",
                             payload: {
                                 nimi: event.target.value,
-                                tenttiIndex: tenttiId - 1,
+                                tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
                                 kysymysIndex: kysymysIndex,
-                                vastausIndex: index
+                                vastausIndex: index,
+                                kysymysId: kysymys.id,
+                                vastausId: vastaus.id
                             }
                         })
                     }} />}
@@ -67,7 +72,9 @@ const Kysymys = ({ kysymys, kysymysNimi, dispatch, tenttiId, vastaukset, kayttaj
                     {kayttaja === 1 && <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} className='poista-vastaus' onClick={() => dispatch({
                         type: 'POISTA_VASTAUS',
                         payload: {
-                            tenttiIndex: tenttiId - 1,
+                            tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
+                            tenttiId: tenttiId,
+                            kysymysId: kysymys.id,
                             kysymysIndex: kysymysIndex,
                             vastaus: vastaus.vastaus
                         }
@@ -78,7 +85,7 @@ const Kysymys = ({ kysymys, kysymysNimi, dispatch, tenttiId, vastaukset, kayttaj
             {kayttaja === 1 && <Button style={{ color: '#fff' }} startIcon={<AddCircleIcon />} className='lisaa-vastaus' onClick={() => dispatch({
                 type: 'LISAA_VASTAUS',
                 payload: {
-                    tenttiIndex: tenttiId - 1,
+                    tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
                     kysymysIndex: kysymysIndex,
                     id: kysymys.vastaukset.length + 1
                 }
