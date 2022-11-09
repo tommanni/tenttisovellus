@@ -26,79 +26,10 @@ const App = () => {
     }
   }, [])
 
-  useEffect(() => {
+  /* useEffect(() => {
 
     const saveData = async () => {
       switch (tenttiDatat.method) {
-        case 'TNMuuttui':
-          const muutaTentinNimi = async (tenttiId, nimi) => {
-            await axios.put('http://localhost:8080/tentin-nimi-muuttui', { tenttiId: tenttiId, nimi: nimi })
-          }
-          muutaTentinNimi(tenttiDatat.idList[0], tenttiDatat.idList[1])
-          break
-
-        case 'KNMuuttui':
-          const muutaKysymyksenNimi = async (tenttiId, kysymysId, nimi) => {
-            await axios.put('http://localhost:8080/kysymyksen-nimi-muuttui', { tenttiId: tenttiId, kysymysId: kysymysId, nimi: nimi })
-          }
-          muutaKysymyksenNimi(tenttiDatat.idList[0], tenttiDatat.idList[1], tenttiDatat.idList[2])
-          break
-
-        case 'VNMuuttui':
-          const muutaVastauksenNimi = async (kysymysId, vastausId, nimi) => {
-            await axios.put('http://localhost:8080/vastauksen-nimi-muuttui', { kysymysId: kysymysId, vastausId: vastausId, nimi: nimi })
-          }
-          muutaVastauksenNimi(tenttiDatat.idList[0], tenttiDatat.idList[1], tenttiDatat.idList[2])
-          break
-
-        case 'PTentti':
-          const poistaTentti = async (tenttiId) => {
-            await axios.delete('http://localhost:8080/poista-tentti', { data: { tenttiId: tenttiId } })
-          }
-          poistaTentti(tenttiDatat.idList[0])
-          break
-
-        case 'PKysymys':
-          const poistaKysymys = async (tenttiId, kysymys, userId) => {
-            await axios.delete('http://localhost:8080/poista-kysymys', { data: { tenttiId: tenttiId, kysymys: kysymys, userId: userId } })
-          }
-          poistaKysymys(tenttiDatat.idList[0], tenttiDatat.idList[1], tenttiDatat.idList[2])
-          break
-
-        case 'PVastaus':
-          const poistaVastaus = async (kysymysId, vastaus, userId) => {
-            await axios.delete('http://localhost:8080/poista-vastaus', { data: { kysymysId: kysymysId, vastaus: vastaus, userId: userId } })
-          }
-          poistaVastaus(tenttiDatat.idList[0], tenttiDatat.idList[1], tenttiDatat.idList[2])
-          break
-
-        case 'LTentti':
-          const lisaaTentti = async () => {
-            await axios.post('http://localhost:8080/lisaa-tentti')
-          }
-          lisaaTentti()
-          break
-
-        case 'LKysymys':
-          const lisaaKysymys = async (tenttiIndex) => {
-            await axios.post('http://localhost:8080/lisaa-kysymys', { tenttiIndex: tenttiIndex })
-          }
-          lisaaKysymys(tenttiDatat.idList[0])
-          break
-
-        case 'LVastaus':
-          const lisaaVastaus = async (kysymysId) => {
-            await axios.post('http://localhost:8080/lisaa-vastaus', { kysymysId: kysymysId })
-          }
-          lisaaVastaus(tenttiDatat.idList[0])
-          break
-
-        case 'VOikein':
-          const vaihdaOikein = async (vastausId, oikein) => {
-            await axios.put('http://localhost:8080/vastaus-oikein', { vastausId: vastausId, oikein: oikein })
-          }
-          vaihdaOikein(tenttiDatat.idList[0], tenttiDatat.idList[1])
-          break
 
         default:
           break
@@ -107,7 +38,7 @@ const App = () => {
     if (tenttiDatat.tallennetaanko === true) {
       saveData()
     }
-  }, [tenttiDatat])
+  }, [tenttiDatat]) */
 
   const setToValue = (tenttiId) => {
     const muutaVoimassa = async () => {
@@ -115,6 +46,7 @@ const App = () => {
     }
     muutaVoimassa()
     setValue([tenttiDatat.tentit.find(tentti => tentti.id === tenttiId)])
+    console.log('hello', value)
     setVastaukset(0)
   }
 
