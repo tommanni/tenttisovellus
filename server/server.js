@@ -36,6 +36,7 @@ app.get('/', (req, res) => {
             const kayttajat = kayttajatData.rows
             const kayttajaData = await pool.query("SELECT id, kayttajatunnus, salasana, admin, kirjauduttu FROM käyttäjä WHERE kirjauduttu = true")
             const kayttaja = kayttajaData.rows[0]
+            console.log('kayttaja:', kayttajaData.rows[0])
             const rekisteröidytäänData = await pool.query('SELECT * FROM rekisteröidytään')
             const rekisteröidytään = rekisteröidytäänData.rows[0].rekisteröidytään
             res.send({ tentit: tentit, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat, naytaVastaukset: false, rekisteröidytään: rekisteröidytään, kayttaja: kayttaja === undefined ? {} : kayttaja, kirjauduttu: kayttaja === undefined ? false : true })
