@@ -21,18 +21,26 @@ const Tentit = () => {
         }
     }
     const lisaaTentti = async () => {
-        await axios.post('http://localhost:8080/lisaa-tentti')
-        tenttiContext.dispatch({
-            type: 'LISAA_TENTTI'
-        })
+        try {
+            await axios.post('http://localhost:8080/lisaa-tentti')
+            tenttiContext.dispatch({
+                type: 'LISAA_TENTTI'
+            })
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     const lisaaKysymys = async () => {
-        await axios.post('http://localhost:8080/lisaa-kysymys', { tenttiIndex: tenttiContext.value[0].id })
-        tenttiContext.dispatch({
-            type: 'LISAA_KYSYMYS',
-            payload: tenttiContext.tentit.findIndex(tentti1 => tentti1.id === tenttiContext.value[0].id)
-        })
+        try {
+            await axios.post('http://localhost:8080/lisaa-kysymys', { tenttiIndex: tenttiContext.value[0].id })
+            tenttiContext.dispatch({
+                type: 'LISAA_KYSYMYS',
+                payload: tenttiContext.tentit.findIndex(tentti1 => tentti1.id === tenttiContext.value[0].id)
+            })
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     return (

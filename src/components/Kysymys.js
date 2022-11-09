@@ -29,43 +29,55 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
     }
 
     const poistaVastaus = async (vastaus) => {
-        await axios.delete('http://localhost:8080/poista-vastaus', { data: { kysymysId: kysymys.id, vastaus: vastaus, userId: tenttiContext.tenttiDatat.kayttaja.id } })
-        tenttiContext.dispatch({
-            type: 'POISTA_VASTAUS',
-            payload: {
-                tenttiIndex: tenttiContext.tentit.findIndex(tentti => tentti.id === tenttiId),
-                tenttiId: tenttiId,
-                kysymysId: kysymys.id,
-                kysymysIndex: kysymysIndex,
-                vastaus: vastaus
-            }
-        })
+        try {
+            await axios.delete('http://localhost:8080/poista-vastaus', { data: { kysymysId: kysymys.id, vastaus: vastaus, userId: tenttiContext.tenttiDatat.kayttaja.id } })
+            tenttiContext.dispatch({
+                type: 'POISTA_VASTAUS',
+                payload: {
+                    tenttiIndex: tenttiContext.tentit.findIndex(tentti => tentti.id === tenttiId),
+                    tenttiId: tenttiId,
+                    kysymysId: kysymys.id,
+                    kysymysIndex: kysymysIndex,
+                    vastaus: vastaus
+                }
+            })
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     const lisaaVastaus = async () => {
-        await axios.post('http://localhost:8080/lisaa-vastaus', { kysymysId: kysymys.id })
-        tenttiContext.dispatch({
-            type: 'LISAA_VASTAUS',
-            payload: {
-                tenttiIndex: tenttiContext.tentit.findIndex(tentti => tentti.id === tenttiId),
-                kysymysIndex: kysymysIndex,
-                kysymysId: kysymys.id,
-                id: kysymys.vastaukset.length + 1
-            }
-        })
+        try {
+            await axios.post('http://localhost:8080/lisaa-vastaus', { kysymysId: kysymys.id })
+            tenttiContext.dispatch({
+                type: 'LISAA_VASTAUS',
+                payload: {
+                    tenttiIndex: tenttiContext.tentit.findIndex(tentti => tentti.id === tenttiId),
+                    kysymysIndex: kysymysIndex,
+                    kysymysId: kysymys.id,
+                    id: kysymys.vastaukset.length + 1
+                }
+            })
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     const vaihdaOikein = async (vastausId, oikein, vastausIndex) => {
-        await axios.put('http://localhost:8080/vastaus-oikein', { vastausId: vastausId, oikein: oikein })
-        tenttiContext.dispatch({
-            type: 'KYSYMYS_OIKEIN',
-            payload: {
-                tenttiIndex: tenttiContext.tentit.findIndex(tentti => tentti.id === tenttiId),
-                vastausId: vastausId,
-                kysymysIndex: kysymysIndex,
-                vastausIndex: vastausIndex
-            }
-        })
+        try {
+            await axios.put('http://localhost:8080/vastaus-oikein', { vastausId: vastausId, oikein: oikein })
+            tenttiContext.dispatch({
+                type: 'KYSYMYS_OIKEIN',
+                payload: {
+                    tenttiIndex: tenttiContext.tentit.findIndex(tentti => tentti.id === tenttiId),
+                    vastausId: vastausId,
+                    kysymysIndex: kysymysIndex,
+                    vastausIndex: vastausIndex
+                }
+            })
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     return (
