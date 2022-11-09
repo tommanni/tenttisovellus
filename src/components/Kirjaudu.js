@@ -1,6 +1,9 @@
 import { useState } from "react"
+import { useContext } from 'react';
+import { TenttiContext } from '../App';
 
-const Kirjaudu = ({ dispatch, rekisteröidytään }) => {
+const Kirjaudu = () => {
+    const tenttiContext = useContext(TenttiContext)
     const [tunnus, setTunnus] = useState("")
     const [salasana, setSalasana] = useState("")
 
@@ -13,18 +16,18 @@ const Kirjaudu = ({ dispatch, rekisteröidytään }) => {
 
     return (
         <div>
-            <p className="otsikko">{rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</p>
+            <p className="otsikko">{tenttiContext.rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</p>
             <form>
                 <label for='kayttajatunnus'>Käyttäjätunnus<br /></label>
                 <input value={tunnus} onChange={handleTunnusChange} type='text' id="kayttajatunnus" /><br />
                 <label for='salasana'>Salasana<br /></label>
                 <input value={salasana} onChange={handleSalasanaChange} type='password' id="Salasana" /><br />
-                <button onClick={() => dispatch({
-                    type: rekisteröidytään ? 'LISAA_KAYTTAJA' : 'KIRJAUDU',
+                <button onClick={() => tenttiContext.dispatch({
+                    type: tenttiContext.rekisteröidytään ? 'LISAA_KAYTTAJA' : 'KIRJAUDU',
                     payload: { kayttajatunnus: tunnus, salasana: salasana, admin: -1 }
-                })}>{rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</button>
+                })}>{tenttiContext.rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</button>
             </form>
-            {!rekisteröidytään && <button onClick={() => (dispatch({ type: 'REKISTEROIDYTAAN' }))}>Rekisteröidy</button>}
+            {!tenttiContext.rekisteröidytään && <button onClick={() => (tenttiContext.dispatch({ type: 'REKISTEROIDYTAAN' }))}>Rekisteröidy</button>}
         </div >
     )
 }

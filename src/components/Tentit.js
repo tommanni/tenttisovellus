@@ -2,52 +2,52 @@ import Button from '@mui/material/Button';
 import Tentti from './Tentti'
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useContext } from 'react';
+import { TenttiContext } from '../App';
 
-const Tentit = ({ tentit, value, setToValue, dispatch, vastaukset, onClick, kayttaja, setValue }) => {
+const Tentit = () => {
+    const tenttiContext = useContext(TenttiContext)
+
     return (
         <div className='tentit'>
-            {tentit.map((tentti) =>
+            {tenttiContext.tentit.map((tentti) =>
                 <>
                     <Button style={{ color: '#fff' }} key={tentti.id}
-                        onClick={() => setToValue(tentti.id)}>{tentti.nimi}</Button>
-                    {kayttaja === 1 ? <input key={tentti.id} placeholder=' vaihda tentin nimi' type="text" onChange={(event) => {
-                        dispatch({
+                        onClick={() => tenttiContext.setToValue(tentti.id)}>{tentti.nimi}</Button>
+                    {tenttiContext.kayttaja === 1 ? <input key={tentti.id} placeholder=' vaihda tentin nimi' type="text" onChange={(event) => {
+                        tenttiContext.dispatch({
                             type: "TENTIN_NIMI_MUUTTUI",
                             payload: {
                                 nimi: event.target.value,
-                                tentinIndex: tentit.findIndex(tentti1 => tentti1.id === tentti.id),
+                                tentinIndex: tenttiContext.tentit.findIndex(tentti1 => tentti1.id === tentti.id),
                                 tentinId: tentti.id
                             }
                         })
                     }} /> : ""}
-                    {kayttaja === 1 ? <Button key={tentti.id} style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => dispatch({
+                    {tenttiContext.kayttaja === 1 ? <Button key={tentti.id} style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => tenttiContext.dispatch({
                         type: 'POISTA_TENTTI',
-                        payload: { nimi: tentti.nimi, tenttiId: tentti.id, setValue: setValue }
+                        payload: { nimi: tentti.nimi, tenttiId: tentti.id, setValue: tenttiContext.setValue }
                     })} /> : ""}
                 </>
             )
             }
-            {kayttaja === 1 && <Button startIcon={<AddCircleIcon />} style={{ color: '#fff' }} onClick={() => dispatch({
+            {tenttiContext.kayttaja === 1 && <Button startIcon={<AddCircleIcon />} style={{ color: '#fff' }} onClick={() => tenttiContext.dispatch({
                 type: 'LISAA_TENTTI'
             })}>LISÄÄ TENTTI</Button>}
-            {Object.values(value).length !== 0 ?
+            {Object.values(tenttiContext.value).length !== 0 ?
 
-                value.map(tentti => <Tentti
+                tenttiContext.value.map(tentti => <Tentti
                     key={tentti.id}
                     tentti={tentti}
-                    dispatch={dispatch}
                     tenttiId={tentti.id}
-                    vastaukset={vastaukset}
-                    kayttaja={kayttaja}
-                    tentit={tentit}
                 />)
                 : ""}
-            {kayttaja === -1 ? <Button
+            {tenttiContext.kayttaja === -1 ? <Button
                 style={{ color: '#fff' }}
-                onClick={onClick}>NÄYTÄ VASTAUKSET
-            </Button> : Object.values(value).length !== 0 && <Button startIcon={<AddCircleIcon />} style={{ color: '#fff' }} onClick={() => dispatch({
+                onClick={tenttiContext.oikeatVastaukset}>NÄYTÄ VASTAUKSET
+            </Button> : Object.values(tenttiContext.value).length !== 0 && <Button startIcon={<AddCircleIcon />} style={{ color: '#fff' }} onClick={() => tenttiContext.dispatch({
                 type: 'LISAA_KYSYMYS',
-                payload: tentit.findIndex(tentti1 => tentti1.id === value[0].id)
+                payload: tenttiContext.tentit.findIndex(tentti1 => tentti1.id === tenttiContext.value[0].id)
             })}>LISÄÄ KYSYMYS</Button>}
         </div>
     )
