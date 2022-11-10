@@ -4,7 +4,7 @@ const express = require('express')  //Jos ei toimi, niin "npm install express"
 const app = express()
 const port = 8080
 const cors = require('cors');
-const { RestartAlt } = require('@mui/icons-material');
+const { RestartAlt, ProductionQuantityLimits } = require('@mui/icons-material');
 
 const pool = new Pool({
     user: 'postgres',
@@ -36,10 +36,12 @@ app.get('/', (req, res) => {
             const kayttajat = kayttajatData.rows
             const kayttajaData = await pool.query("SELECT id, kayttajatunnus, salasana, admin, kirjauduttu FROM käyttäjä WHERE kirjauduttu = true")
             const kayttaja = kayttajaData.rows[0]
-            console.log('kayttaja:', kayttajaData.rows[0])
+            const kayttajavastausData = await pool.query('SELECT id, user_id, answer_id, question_id, exam_id FROM user_answer ORDER BY id')
+            const kayttajaVastaukset = kayttajavastausData.rows
+            //console.log('kayttaja:', kayttajaData.rows[0])
             const rekisteröidytäänData = await pool.query('SELECT * FROM rekisteröidytään')
             const rekisteröidytään = rekisteröidytäänData.rows[0].rekisteröidytään
-            res.send({ tentit: tentit, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat, naytaVastaukset: false, rekisteröidytään: rekisteröidytään, kayttaja: kayttaja === undefined ? {} : kayttaja, kirjauduttu: kayttaja === undefined ? false : true })
+            res.send({ tentit: tentit, kayttajaVastaukset: kayttajaVastaukset, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat, naytaVastaukset: false, rekisteröidytään: rekisteröidytään, kayttaja: kayttaja === undefined ? {} : kayttaja, kirjauduttu: kayttaja === undefined ? false : true })
         } catch (error) {
             console.log('virhetilanne', error)
         }
@@ -97,7 +99,6 @@ app.put('/tentin-nimi-muuttui', (req, res) => {
 
 app.put('/kysymyksen-nimi-muuttui', (req, res) => {
     const muutaKysymyksenNimi = async () => {
-        console.log(req.body)
         await pool.query('UPDATE question SET kysymys = ($1) WHERE fk_exam_id = ($2) AND id = ($3)', [req.body.nimi, req.body.tenttiId, req.body.kysymysId])
     }
     res.send('hello world')
@@ -114,11 +115,14 @@ app.put('/vastauksen-nimi-muuttui', (req, res) => {
 
 app.delete('/poista-tentti', (req, res) => {
     const poistaTentti = async () => {
+        await pool.query('BEGIN')
         await pool.query('DELETE FROM finished_exam WHERE exam_id = ($1)', [req.body.tenttiId])
         await pool.query('DELETE FROM user_answer WHERE exam_id = ($1)', [req.body.tenttiId])
         await pool.query('DELETE FROM answer WHERE question_id IN (SELECT id FROM question WHERE fk_exam_id = ($1))', [req.body.tenttiId])
         await pool.query('DELETE FROM question WHERE fk_exam_id = ($1)', [req.body.tenttiId])
         await pool.query('DELETE FROM exam WHERE id = ($1)', [req.body.tenttiId])
+        await pool.query('UPDATE exam SET voimassa = true WHERE id = (SELECT MIN(id) FROM exam)')
+        await pool.query('COMMIT')
     }
     poistaTentti()
     res.send('hello world')
@@ -126,9 +130,11 @@ app.delete('/poista-tentti', (req, res) => {
 
 app.delete('/poista-kysymys', (req, res) => {
     const poistaKysymys = async () => {
+        await pool.query('BEGIN')
         await pool.query('DELETE FROM user_answer WHERE question_id = (SELECT id FROM question WHERE kysymys = ($1) AND user_id = ($2))', [req.body.kysymys, req.body.userId])
         await pool.query('DELETE FROM answer WHERE question_id IN (SELECT id FROM question WHERE kysymys = ($1))', [req.body.kysymys])
         await pool.query('DELETE FROM question WHERE kysymys = ($1) AND fk_exam_id = ($2)', [req.body.kysymys, req.body.tenttiId])
+        await pool.query('COMMIT')
     }
     res.send('hello world')
     poistaKysymys()
@@ -136,11 +142,21 @@ app.delete('/poista-kysymys', (req, res) => {
 
 app.delete('/poista-vastaus', (req, res) => {
     const poistaVastaus = async () => {
+        await pool.query('BEGIN')
         await pool.query('DELETE FROM user_answer where answer_id = (SELECT id FROM answer WHERE vastaus = ($1) AND user_id = ($2))', [req.body.vastaus, req.body.userId])
         await pool.query('DELETE FROM answer WHERE question_id = ($1) AND vastaus = ($2)', [req.body.kysymysId, req.body.vastaus])
+        await pool.query('COMMIT')
     }
     res.send('hello world')
     poistaVastaus()
+})
+
+app.post('/lisaa-kayttaja', (req, res) => {
+    const lisaaKayttaja = async () => {
+        await pool.query('INSERT INTO käyttäjä (kayttajatunnus, salasana, admin, kirjauduttu) VALUES ($1, $2, -1, false)', [req.body.kayttajatunnus, req.body.salasana])
+    }
+    res.send('hello world')
+    lisaaKayttaja()
 })
 
 app.post('/kirjaudu', (req, res) => {
@@ -195,13 +211,46 @@ app.put('/muuta-voimassa', (req, res) => {
 app.put('/vastaus-oikein', (req, res) => {
     const vaihdaOikein = async () => {
         try {
-            await pool.query('UPDATE answer SET oikein = ($1) WHERE id = ($2)', [req.body.oikein, req.body.vastausId])
+            await pool.query('UPDATE answer SET oikein = ($1) WHERE id = ($2)', [!req.body.oikein, req.body.vastausId])
         } catch (err) {
             console.log(err)
         }
     }
     res.send('Hello world')
     vaihdaOikein()
+})
+
+app.put('/aseta-valinta', (req, res) => {
+    const asetaValinta = async () => {
+        await pool.query('UPDATE answer SET valinta = ($1) WHERE id = ($2)', [!req.body.valinta, req.body.vastausId])
+        if (!req.body.valinta) {
+            await pool.query('INSERT INTO user_answer (id, user_id, answer_id, question_id, exam_id) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM user_answer), 1), $1, $2, $3, $4)', [req.body.kayttajaId, req.body.vastausId, req.body.kysymysId, req.body.tenttiId])
+        } else {
+            await pool.query('DELETE FROM user_answer WHERE user_id = ($1) AND answer_id = ($2)', [req.body.kayttajaId, req.body.vastausId])
+        }
+
+    }
+    res.send('Hello world')
+    asetaValinta()
+})
+
+app.get('/hae-tulos', (req, res) => {
+    const haeTulos = async () => {
+        const maxPisteet = await pool.query('SELECT COUNT(*) FROM answer WHERE question_id IN (SELECT id FROM question WHERE fk_exam_id = ($1))', [req.query.tenttiId])
+        const pisteet = await pool.query('SELECT COUNT(*) FROM answer WHERE id IN (SELECT answer_id FROM user_answer WHERE user_id = ($1) AND exam_id = ($2)) AND oikein = true', [req.query.kayttajaId, req.query.tenttiId])
+        console.log(maxPisteet.rows[0].count)
+        res.send({ maxPisteet: maxPisteet.rows[0].count, pisteet: pisteet.rows[0].count })
+    }
+    haeTulos()
+})
+
+app.get('/onko-valittu', (req, res) => {
+    const onkoValittu = async () => {
+        const valittu = await pool.query('SELECT CASE WHEN id IN (SELECT answer_id FROM user_answer WHERE user_id = ($1)) THEN true ELSE false END FROM answer ORDER BY id', [req.query.kayttajaId])
+        console.log(valittu.rows)
+        res.send(valittu.rows)
+    }
+    onkoValittu()
 })
 
 app.listen(port, () => {
