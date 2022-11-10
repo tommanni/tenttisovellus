@@ -50,7 +50,13 @@ const App = () => {
     setVastaukset(0)
   }
 
-  const oikeatVastaukset = () => {
+  const oikeatVastaukset = (tenttiId) => {
+    console.log(tenttiDatat.kayttaja)
+    const haeTulos = async () => {
+      const tulos = await axios.get('http://localhost:8080/hae-tulos', { params: { tenttiId: tenttiId, kayttajaId: tenttiDatat.kayttaja.id } })
+      alert(`Kysymyksistäsi meni oikein ${tulos.data.pisteet}/${tulos.data.maxPisteet}!`)
+    }
+    haeTulos()
     setVastaukset(1)
   }
 
@@ -59,7 +65,7 @@ const App = () => {
       tenttiDatat: tenttiDatat, dispatch: dispatch, kirjauduttu: tenttiDatat.kirjauduttu,
       tentit: tenttiDatat.tentit, value: value, setToValue: setToValue,
       setValue: setValue, oikeatVastaukset: oikeatVastaukset, kayttaja: Object.keys(tenttiDatat).length > 0 && tenttiDatat.kayttaja.admin,
-      vastaukset: vastaukset, rekisteröidytään: tenttiDatat.rekisteröidytään
+      vastaukset: vastaukset, rekisteröidytään: tenttiDatat.rekisteröidytään, kayttajaVastaukset: tenttiDatat.kayttajaVastaukset
     }
     }>
       <div>
