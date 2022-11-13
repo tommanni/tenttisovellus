@@ -1,16 +1,28 @@
 import Button from '@mui/material/Button';
 import { useContext } from 'react';
 import { TenttiContext } from '../App';
+import axios from 'axios';
 
 const Header = () => {
-    const { kirjauduttu, dispatch } = useContext(TenttiContext)
+    const { kirjauduttu, dispatch, kayttaja } = useContext(TenttiContext)
+
+    const handlePoistuClick = async () => {
+        try {
+            await axios.post('http://localhost:8080/kayttaja/poistu')
+            dispatch({ type: 'POISTU' })
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
     return (
         <header>
             <nav className='nav'>
                 <ul className='nav-items'>
-                    <li className='tentteja'><Button style={{ color: '#fff' }} href="">TENTIT</Button></li>
+                    <li className='tentteja'><Button onClick={() => dispatch({ type: 'NAYTATENTIT' })} style={{ color: '#fff' }} href="">TENTIT</Button></li>
+                    {kayttaja === 1 && kirjauduttu && <li ><Button onClick={() => dispatch({ type: 'NAYTAOPPILAAT' })} style={{ color: '#fff' }} href="">OPPILAAT</Button></li>}
                     <li className='tietoa'><Button style={{ color: '#fff' }} href="https://www.youtube.com/watch?v=sAqnNWUD79Q">TIETOA SOVELLUKSESTA</Button></li>
-                    {kirjauduttu && <li className='poistu'><Button onClick={() => dispatch({ type: 'POISTU' })} style={{ color: "#fff" }} href="">POISTU</Button></li>}
+                    {kirjauduttu && <li className='poistu'><Button onClick={handlePoistuClick} style={{ color: "#fff" }} href="">POISTU</Button></li>}
                 </ul>
             </nav>
         </header >

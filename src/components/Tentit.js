@@ -11,7 +11,7 @@ const Tentit = () => {
 
     async function poistaTentti(nimi, tenttiId) {
         try {
-            await axios.delete('http://localhost:8080/poista-tentti', { data: { tenttiId: tenttiId } })
+            await axios.delete('http://localhost:8080/tentti/poista', { data: { tenttiId: tenttiId } })
             dispatch({
                 type: 'POISTA_TENTTI',
                 payload: { nimi: nimi, tenttiId: tenttiId, setToValue: setToValue }
@@ -22,7 +22,7 @@ const Tentit = () => {
     }
     const lisaaTentti = async () => {
         try {
-            await axios.post('http://localhost:8080/lisaa-tentti')
+            await axios.post('http://localhost:8080/tentti/lisaa')
             dispatch({
                 type: 'LISAA_TENTTI'
             })
@@ -33,7 +33,7 @@ const Tentit = () => {
 
     const lisaaKysymys = async () => {
         try {
-            await axios.post('http://localhost:8080/lisaa-kysymys', { tenttiIndex: value[0].id })
+            await axios.post('http://localhost:8080/kysymys/lisaa', { tenttiIndex: value[0].id })
             dispatch({
                 type: 'LISAA_KYSYMYS',
                 payload: tentit.findIndex(tentti1 => tentti1.id === value[0].id)
@@ -52,7 +52,7 @@ const Tentit = () => {
                     {kayttaja === 1 ? <input key={tentti.id} placeholder=' vaihda tentin nimi' type="text" onChange={(event) => {
                         const muutaTentinNimi = async (tenttiId, nimi) => {
                             try {
-                                await axios.put('http://localhost:8080/tentin-nimi-muuttui', { tenttiId: tenttiId, nimi: nimi })
+                                await axios.put('http://localhost:8080/tentti/nimi-muuttui', { tenttiId: tenttiId, nimi: nimi })
                                 dispatch({
                                     type: "TENTIN_NIMI_MUUTTUI",
                                     payload: {

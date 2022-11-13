@@ -11,7 +11,6 @@ const Tentti = ({ tentti, tenttiId }) => {
                 kysymysIndex={index}
             />)}
         </div>
-
     );
 }
 
