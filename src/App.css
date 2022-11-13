@@ -94,6 +94,12 @@ li {
   padding-left: 1000px;
 }
 
+.oppilaat {
+  padding-left: 20%;
+  color: #fff;
+  padding-top: 80px;
+}
+
 ::-webkit-scrollbar {
   width: 12px;
 }

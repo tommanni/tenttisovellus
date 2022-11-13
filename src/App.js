@@ -2,6 +2,7 @@ import './App.css';
 import Header from './components/Header'
 import Tentit from './components/Tentit'
 import Kirjaudu from './components/Kirjaudu';
+import Oppilastiedot from './components/Oppilastiedot';
 import { useState, useReducer, useEffect, createContext } from 'react'
 import axios from 'axios'
 import { reducer } from './reducer'
@@ -16,7 +17,7 @@ const App = () => {
   useEffect(() => {
     try {
       const getData = async () => {
-        const result = await axios.get('http://localhost:8080');
+        const result = await axios.get('http://localhost:8080/tentti');
         console.log(result.data)
         dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
       }
@@ -26,25 +27,12 @@ const App = () => {
     }
   }, [])
 
-  /* useEffect(() => {
-
-    const saveData = async () => {
-      switch (tenttiDatat.method) {
-
-        default:
-          break
-      }
-    }
-    if (tenttiDatat.tallennetaanko === true) {
-      saveData()
-    }
-  }, [tenttiDatat]) */
-
   const setToValue = (tenttiId) => {
     const muutaVoimassa = async () => {
       await axios.put('http://localhost:8080/muuta-voimassa', { tenttiId: tenttiId, vanhaTenttiId: Object.keys(value[0]).length !== 0 ? value[0].id : 0 })
     }
     muutaVoimassa()
+    console.log(tenttiDatat.kayttaja.id)
     setValue([tenttiDatat.tentit.find(tentti => tentti.id === tenttiId)])
     console.log('hello', value)
     setVastaukset(0)
@@ -53,8 +41,8 @@ const App = () => {
   const oikeatVastaukset = (tenttiId) => {
     console.log(tenttiDatat.kayttaja)
     const haeTulos = async () => {
-      const tulos = await axios.get('http://localhost:8080/hae-tulos', { params: { tenttiId: tenttiId, kayttajaId: tenttiDatat.kayttaja.id } })
-      alert(`Kysymyksistäsi meni oikein ${tulos.data.pisteet}/${tulos.data.maxPisteet}!`)
+      const tulos = await axios.get('http://localhost:8080/kayttaja/hae-tulos', { params: { tenttiId: tenttiId, kayttajaId: tenttiDatat.kayttaja.id } })
+      alert(`Sait ${Number(tulos.data.valitutPisteet)}/${tulos.data.maxPisteet} pistettä!`)
     }
     haeTulos()
     setVastaukset(1)
@@ -65,12 +53,14 @@ const App = () => {
       tenttiDatat: tenttiDatat, dispatch: dispatch, kirjauduttu: tenttiDatat.kirjauduttu,
       tentit: tenttiDatat.tentit, value: value, setToValue: setToValue,
       setValue: setValue, oikeatVastaukset: oikeatVastaukset, kayttaja: Object.keys(tenttiDatat).length > 0 && tenttiDatat.kayttaja.admin,
-      vastaukset: vastaukset, rekisteröidytään: tenttiDatat.rekisteröidytään, kayttajaVastaukset: tenttiDatat.kayttajaVastaukset
+      vastaukset: vastaukset, rekisteröidytään: tenttiDatat.rekisteröidytään, kayttajaVastaukset: tenttiDatat.kayttajaVastaukset,
+      kayttajat: tenttiDatat.kayttajat
     }
     }>
       <div>
         {tenttiDatat.tietoAlustettu && <Header />}
-        {tenttiDatat.tietoAlustettu && tenttiDatat.kirjauduttu && <Tentit />}
+        {tenttiDatat.naytaOppilaat && tenttiDatat.kirjauduttu && <Oppilastiedot />}
+        {tenttiDatat.tietoAlustettu && tenttiDatat.kirjauduttu && !tenttiDatat.naytaOppilaat && <Tentit />}
         <div className='kirjaudu'>
           {!tenttiDatat.kirjauduttu && <Kirjaudu />}
         </div>

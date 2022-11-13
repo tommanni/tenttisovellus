@@ -1,5 +1,3 @@
-import axios from "axios"
-
 export function reducer(state, action) {
 
     switch (action.type) {
@@ -40,7 +38,7 @@ export function reducer(state, action) {
 
         case 'POISTA_TENTTI':
             let tentit11 = { ...state, tallennetaanko: true, method: 'PTentti', idList: [action.payload.tenttiId] }
-            action.payload.setValue({})
+            action.payload.setToValue(tentit11.tentit[0].id)
             tentit11.tentit = tentit11.tentit.filter(tentti => tentti.id !== action.payload.tenttiId)
             return tentit11
 
@@ -73,24 +71,27 @@ export function reducer(state, action) {
 
         case 'ASETA_VALINTA':
             let tentit9 = { ...state, tallennetaanko: true }
-            tentit9.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].valinta = true
+            const idList4 = tentit9.kayttajaVastaukset.map(vastaus => vastaus.id)
+            if (!action.payload.valinta) {
+                tentit9.kayttajaVastaukset.push({ id: tentit9.kayttajaVastaukset.length === 0 ? 1 : Math.max(...idList4) + 1, user_id: action.payload.kayttajaId, answer_id: action.payload.vastausId, question_id: action.payload.kysymysId, exam_id: action.payload.tenttiId })
+            } else {
+                tentit9.kayttajaVastaukset = tentit9.kayttajaVastaukset.filter(({ user_id, answer_id }) => !(Number(user_id) === Number(action.payload.kayttajaId) && Number(answer_id) === Number(action.payload.vastausId)))
+            }
+            tentit9.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].valinta = !action.payload.valinta
+            console.log(action.payload, tentit9.kayttajaVastaukset)
             return tentit9
 
         case 'LISAA_KAYTTAJA':
             let tentit12 = { ...state, tallennetaanko: true, rekisteröidytään: false }
-            const isFound = tentit12.kayttajat.some(kayttaja => {
-                if (kayttaja.kayttajatunnus === action.payload.kayttajatunnus) {
-                    return true
-                }
-                return false
-            })
-            if (isFound) {
-                alert('Käyttäjätunnus on varattu')
-                return { ...state, tallennetaanko: true }
-            }
             tentit12.kayttajat.push({ kayttajatunnus: action.payload.kayttajatunnus, salasana: action.payload.salasana, admin: action.payload.admin })
-            axios.post('http://localhost:8080/rekisteroidytaan', { data: false })
             return tentit12
+
+        case 'POISTA_KAYTTAJA':
+            let tentit18 = { ...state }
+            tentit18.kayttajat = tentit18.kayttajat.filter(kayttaja => kayttaja.id !== action.payload.id)
+            action.payload.setOppilaat(tentit18.kayttajat.filter(kayttaja => Number(kayttaja.admin) !== 1))
+            console.log(tentit18)
+            return tentit18
 
         case 'KIRJAUDU':
             let kayttaja = state.kayttajat.filter(kayttaja => kayttaja.kayttajatunnus === action.payload.kayttajatunnus && kayttaja.salasana === action.payload.salasana)
@@ -98,25 +99,30 @@ export function reducer(state, action) {
                 alert('Nimessä tai salasanassa on virhe')
                 return { ...state, tallennetaanko: true }
             }
-            axios.post('http://localhost:8080/kirjaudu', { data: kayttaja[0] })
             let tentit13 = { ...state, kayttaja: kayttaja[0], kirjauduttu: true, tallennetaanko: true }
             return tentit13
 
         case 'REKISTEROIDYTAAN':
             let tentit14 = { ...state, rekisteröidytään: true }
-            axios.post('http://localhost:8080/rekisteroidytaan', { data: true })
             return tentit14
 
         case 'POISTU':
             let tentit15 = { ...state, kirjauduttu: false, tallennetaanko: true }
-            axios.post('http://localhost:8080/poistu')
             return tentit15
+
+        case 'NAYTAOPPILAAT':
+            let tentit16 = { ...state, naytaOppilaat: true }
+            return tentit16
+
+        case 'NAYTATENTIT':
+            let tentit17 = { ...state, naytaOppilaat: false }
+            return tentit17
 
         case 'ALUSTA_DATA':
             if (action.payload.data.tentit.find(tentti => tentti.voimassa === true) !== undefined) {
                 action.payload.setValue([action.payload.data.tentit.find(tentti => tentti.voimassa === true)])
             }
-            return { ...action.payload.data, tietoAlustettu: true }
+            return { ...action.payload.data, tietoAlustettu: true, naytaOppilaat: false }
 
         case 'PAIVITA_TALLENNUSTILA':
             return { ...state, tallennetaanko: action.payload }
