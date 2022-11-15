@@ -26,17 +26,6 @@ app.use('/kysymys', kysymysRouter)
 app.use('/vastaus', vastausRouter)
 app.use('/kayttaja', kayttajaRouter)
 
-
-app.put('/muuta-voimassa', async (req, res) => {
-    try {
-        await pool.query('UPDATE exam SET voimassa = false WHERE id = ($1)', [req.body.vanhaTenttiId])
-        await pool.query('UPDATE exam SET voimassa = true WHERE id = ($1)', [req.body.tenttiId])
-        res.status(200).send('Tentti asetettu voimaan')
-    } catch (err) {
-        res.status(500).send('Tentin voimaan asetus epäonnistui')
-    }
-})
-
 app.get('/onko-valittu', async (req, res) => {
     try {
         const valittu = await pool.query('SELECT CASE WHEN id IN (SELECT answer_id FROM user_answer WHERE user_id = ($1)) THEN true ELSE false END FROM answer ORDER BY id', [req.query.kayttajaId])

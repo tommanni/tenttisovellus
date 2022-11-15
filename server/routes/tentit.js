@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { Pool, Client } = require('pg')
+const { Pool } = require('pg')
 
 const pool = new Pool({
     user: 'postgres',
@@ -14,27 +14,25 @@ const pool = new Pool({
 router.get('/', async (req, res) => {
     // tiedon luku asynkronisesti
     try {
-        let tenttiData = await pool.query("SELECT * FROM exam ORDER BY id")
+        let tenttiData;
+        console.log(req.query.kayttaja.id)
+        tenttiData = await pool.query("SELECT * FROM exam WHERE NOT id IN (SELECT exam_id FROM finished_exam WHERE user_id = ($1)) ORDER BY id", [req.query.kayttaja.id])
         let tentit = tenttiData.rows
         for (let i = 0; i < tentit.length; i++) {
             let kysymykset = await pool.query("SELECT id, kysymys FROM question WHERE fk_exam_id = ($1) ORDER BY id", [Number(tentit[i].id)])
             tentit[i].kysymykset = kysymykset.rows
             for (let j = 0; j < tentit[i].kysymykset.length; j++) {
-                let vastaukset = await pool.query("SELECT id, vastaus, oikein, valinta FROM answer WHERE question_id = ($1) ORDER BY id", [Number(tentit[i].kysymykset[j].id)])
+                let vastaukset = await pool.query("SELECT id, vastaus, oikein FROM answer WHERE question_id = ($1) ORDER BY id", [Number(tentit[i].kysymykset[j].id)])
                 tentit[i].kysymykset[j].vastaukset = vastaukset.rows
                 //console.log('dsfs', tentit[i].kysymykset[j].vastaukset)
             }
         }
         const kayttajatData = await pool.query("SELECT id, kayttajatunnus, salasana, admin, kirjauduttu FROM käyttäjä")
         const kayttajat = kayttajatData.rows
-        const kayttajaData = await pool.query("SELECT id, kayttajatunnus, salasana, admin, kirjauduttu FROM käyttäjä WHERE kirjauduttu = true")
-        const kayttaja = kayttajaData.rows[0]
         const kayttajavastausData = await pool.query('SELECT id, user_id, answer_id, question_id, exam_id FROM user_answer ORDER BY id')
         const kayttajaVastaukset = kayttajavastausData.rows
         //console.log('kayttaja:', kayttajaData.rows[0])
-        const rekisteröidytäänData = await pool.query('SELECT * FROM rekisteröidytään')
-        const rekisteröidytään = rekisteröidytäänData.rows[0].rekisteröidytään
-        res.status(200).send({ tentit: tentit, kayttajaVastaukset: kayttajaVastaukset, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat, naytaVastaukset: false, rekisteröidytään: rekisteröidytään, kayttaja: kayttaja === undefined ? {} : kayttaja, kirjauduttu: kayttaja === undefined ? false : true })
+        res.status(200).send({ tentit: tentit, kayttajaVastaukset: kayttajaVastaukset, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat, naytaVastaukset: false, rekisteröidytään: false })
     } catch (error) {
         res.status(500).send('Datan hakeminen epäonnistui')
     }
@@ -43,7 +41,7 @@ router.get('/', async (req, res) => {
 //lisää tentti
 router.post('/lisaa', async (req, res) => {
     try {
-        await pool.query("INSERT INTO exam (id, nimi, voimassa) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM EXAM), 1), '', false)")
+        await pool.query("INSERT INTO exam (id, nimi, voimassa, kaytossa) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM EXAM), 1), '', false, false)")
         res.status(200).send('Tentin lisäys onnistui')
     } catch (err) {
         res.status(500).send('Tentin lisäys epäonnistui')
@@ -78,5 +76,15 @@ router.delete('/poista', async (req, res) => {
     }
 
 })
+
+router.put('/kayttoon', async (req, res) => {
+    try {
+        await pool.query('UPDATE exam SET kaytossa = ($1) WHERE id = ($2)', [req.body.kaytossa, req.body.tenttiId])
+        res.status(200).send('Tentti asetettu voimaan')
+    } catch (err) {
+        res.status(500).send('Tentin voimaan asetus epäonnistui')
+    }
+})
+
 
 module.exports = router

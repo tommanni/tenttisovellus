@@ -13,7 +13,7 @@ const pool = new Pool({
 //lisää vastaus
 router.post('/lisaa', async (req, res) => {
     try {
-        await pool.query("INSERT INTO answer (id, question_id, vastaus, oikein, valinta) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM answer), 1), ($1), '', false, false)", [req.body.kysymysId])
+        await pool.query("INSERT INTO answer (id, question_id, vastaus, oikein) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM answer), 1), ($1), '', false)", [req.body.kysymysId])
         res.status(200).send('Vastaus tallennettu')
     } catch (err) {
         res.status(500).send('Tallennus epäonnistui')
@@ -35,7 +35,18 @@ router.put('/nimi-muuttui', async (req, res) => {
 router.put('/oikein', async (req, res) => {
     try {
         await pool.query('UPDATE answer SET oikein = ($1) WHERE id = ($2)', [!req.body.oikein, req.body.vastausId])
+        await pool.query('UPDATE exam SET kaytossa = false WHERE id = ($1)', [req.body.tenttiId])
         res.status(200).send('Vastauksen oikeellisuus muutettu')
+    } catch (err) {
+        res.status(500).send('Vastauksen oikeellisuuden muuttaminen epäonnistui')
+    }
+})
+
+router.get('/laske-oikein', async (req, res) => {
+    try {
+        const maara = await pool.query('SELECT COUNT(*) FROM answer WHERE question_id IN (SELECT id FROM question WHERE fk_exam_id = ($1)) AND oikein = true', [req.query.tenttiId])
+        console.log(maara.rows)
+        res.status(200).send({ maara: maara.rows[0].count })
     } catch (err) {
         res.status(500).send('Vastauksen oikeellisuuden muuttaminen epäonnistui')
     }
