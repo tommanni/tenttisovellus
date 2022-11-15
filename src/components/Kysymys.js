@@ -63,14 +63,15 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
 
     const vaihdaOikein = async (vastausId, oikein, vastausIndex) => {
         try {
-            await axios.put('http://localhost:8080/vastaus/oikein', { vastausId: vastausId, oikein: oikein })
+            await axios.put('http://localhost:8080/vastaus/oikein', { vastausId: vastausId, oikein: oikein, tenttiId: tenttiId })
             dispatch({
                 type: 'KYSYMYS_OIKEIN',
                 payload: {
                     tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
                     vastausId: vastausId,
                     kysymysIndex: kysymysIndex,
-                    vastausIndex: vastausIndex
+                    vastausIndex: vastausIndex,
+                    tenttiId: tenttiId
                 }
             })
         } catch (err) {

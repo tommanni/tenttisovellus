@@ -4,12 +4,12 @@ import { TenttiContext } from '../App';
 import axios from 'axios';
 
 const Header = () => {
-    const { kirjauduttu, dispatch, kayttaja } = useContext(TenttiContext)
+    const { kirjauduttu, dispatch, tenttiDatat, kayttaja } = useContext(TenttiContext)
 
     const handlePoistuClick = async () => {
         try {
             await axios.post('http://localhost:8080/kayttaja/poistu')
-            dispatch({ type: 'POISTU' })
+            dispatch({ type: 'POISTU', payload: tenttiDatat.kayttaja })
         } catch (err) {
             console.log(err)
         }

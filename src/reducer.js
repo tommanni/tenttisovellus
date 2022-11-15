@@ -29,17 +29,23 @@ export function reducer(state, action) {
             tentit5.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset = tentit5.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset.filter(vastaus => vastaus.vastaus !== action.payload.vastaus)
             return tentit5
 
+        case 'OTA_TENTTI_KAYTTOON':
+            let tentit19 = { ...state }
+            tentit19.tentit[action.payload].kaytossa = !tentit19.tentit[action.payload].kaytossa
+            return tentit19
+
         case 'LISAA_TENTTI':
             let tentit10 = { ...state, tallennetaanko: true, method: 'LTentti' }
             let idList = tentit10.tentit.map(tentti => Number(tentti.id))
-            tentit10.tentit.push({ nimi: '', id: idList.length === 0 ? 1 : Math.max(...idList) + 1, kysymykset: [] })
+            tentit10.tentit.push({ nimi: '', id: idList.length === 0 ? 1 : Math.max(...idList) + 1, kysymykset: [], kaytossa: false })
             console.log(tentit10.tentit)
             return tentit10
 
         case 'POISTA_TENTTI':
-            let tentit11 = { ...state, tallennetaanko: true, method: 'PTentti', idList: [action.payload.tenttiId] }
+            let tentit11 = { ...state }
             action.payload.setToValue(tentit11.tentit[0].id)
             tentit11.tentit = tentit11.tentit.filter(tentti => tentti.id !== action.payload.tenttiId)
+            localStorage.setItem('tenttiId', tentit11.tentit[0].id)
             return tentit11
 
         case 'LISAA_KYSYMYS':
@@ -67,6 +73,7 @@ export function reducer(state, action) {
             let oikein = !state.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].oikein
             let tentit8 = { ...state, tallennetaanko: true, method: 'VOikein', idList: [action.payload.vastausId, oikein] }
             tentit8.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].oikein = oikein
+            tentit8.tentit[action.payload.tenttiIndex].kaytossa = false
             return tentit8
 
         case 'ASETA_VALINTA':
@@ -77,7 +84,6 @@ export function reducer(state, action) {
             } else {
                 tentit9.kayttajaVastaukset = tentit9.kayttajaVastaukset.filter(({ user_id, answer_id }) => !(Number(user_id) === Number(action.payload.kayttajaId) && Number(answer_id) === Number(action.payload.vastausId)))
             }
-            tentit9.tentit[action.payload.tenttiIndex].kysymykset[action.payload.kysymysIndex].vastaukset[action.payload.vastausIndex].valinta = !action.payload.valinta
             console.log(action.payload, tentit9.kayttajaVastaukset)
             return tentit9
 
@@ -94,12 +100,17 @@ export function reducer(state, action) {
             return tentit18
 
         case 'KIRJAUDU':
-            let kayttaja = state.kayttajat.filter(kayttaja => kayttaja.kayttajatunnus === action.payload.kayttajatunnus && kayttaja.salasana === action.payload.salasana)
+            let kayttaja = action.payload.kayttaja
             if (kayttaja.length === 0) {
                 alert('Nimessä tai salasanassa on virhe')
                 return { ...state, tallennetaanko: true }
             }
-            let tentit13 = { ...state, kayttaja: kayttaja[0], kirjauduttu: true, tallennetaanko: true }
+            kayttaja.kirjauduttu = true
+            console.log(state)
+            let tentit13 = { ...state, kayttaja: kayttaja, kirjauduttu: true, tallennetaanko: true }
+            console.log('sitten kirjaudu')
+            localStorage.setItem('tenttiId', tentit13.tentit[0].id)
+            action.payload.setValue([tentit13.tentit[0]])
             return tentit13
 
         case 'REKISTEROIDYTAAN':
@@ -107,7 +118,10 @@ export function reducer(state, action) {
             return tentit14
 
         case 'POISTU':
-            let tentit15 = { ...state, kirjauduttu: false, tallennetaanko: true }
+            let tentit15 = { ...state, kirjauduttu: false, tallennetaanko: true, naytaOppilaat: false }
+            let kayttajaData1 = action.payload
+            kayttajaData1.kirjauduttu = false
+            localStorage.setItem('kayttaja', JSON.stringify(kayttajaData1))
             return tentit15
 
         case 'NAYTAOPPILAAT':
@@ -119,10 +133,14 @@ export function reducer(state, action) {
             return tentit17
 
         case 'ALUSTA_DATA':
-            if (action.payload.data.tentit.find(tentti => tentti.voimassa === true) !== undefined) {
-                action.payload.setValue([action.payload.data.tentit.find(tentti => tentti.voimassa === true)])
+            const tenttiId = JSON.parse(localStorage.getItem('tenttiId'))
+            if (tenttiId !== null) {
+                action.payload.setValue([action.payload.data.tentit.find(tentti => Number(tentti.id) === tenttiId)])
+            } else {
+                action.payload.setValue([action.payload.data.tentit[0].id])
             }
-            return { ...action.payload.data, tietoAlustettu: true, naytaOppilaat: false }
+            let kayttajaData = action.payload.kayttaja
+            return { ...action.payload.data, tietoAlustettu: true, naytaOppilaat: false, kayttaja: kayttajaData, kirjauduttu: kayttajaData.kirjauduttu }
 
         case 'PAIVITA_TALLENNUSTILA':
             return { ...state, tallennetaanko: action.payload }

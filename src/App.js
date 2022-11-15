@@ -17,9 +17,11 @@ const App = () => {
   useEffect(() => {
     try {
       const getData = async () => {
-        const result = await axios.get('http://localhost:8080/tentti');
+        const kayttaja = JSON.parse(localStorage.getItem('kayttaja'))
+        const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
         console.log(result.data)
-        dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
+        dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
+
       }
       getData()
     } catch (error) {
@@ -28,32 +30,28 @@ const App = () => {
   }, [])
 
   const setToValue = (tenttiId) => {
-    const muutaVoimassa = async () => {
-      await axios.put('http://localhost:8080/muuta-voimassa', { tenttiId: tenttiId, vanhaTenttiId: Object.keys(value[0]).length !== 0 ? value[0].id : 0 })
-    }
-    muutaVoimassa()
-    console.log(tenttiDatat.kayttaja.id)
-    setValue([tenttiDatat.tentit.find(tentti => tentti.id === tenttiId)])
+    console.log(tenttiDatat)
+    const tentti = tenttiDatat.tentit.find(tentti => tentti.id === tenttiId)
+    localStorage.setItem('tenttiId', tentti.id)
+    setValue([tentti])
     console.log('hello', value)
     setVastaukset(0)
   }
 
-  const oikeatVastaukset = (tenttiId) => {
+  const oikeatVastaukset = async (tenttiId) => {
     console.log(tenttiDatat.kayttaja)
-    const haeTulos = async () => {
-      const tulos = await axios.get('http://localhost:8080/kayttaja/hae-tulos', { params: { tenttiId: tenttiId, kayttajaId: tenttiDatat.kayttaja.id } })
-      alert(`Sait ${Number(tulos.data.valitutPisteet)}/${tulos.data.maxPisteet} pistettä!`)
-    }
-    haeTulos()
     setVastaukset(1)
+    const tulos = await axios.get('http://localhost:8080/kayttaja/hae-tulos', { params: { tenttiId: tenttiId, kayttajaId: tenttiDatat.kayttaja.id } })
+    alert(`Sait arvosanan ${tulos.data.arvosana < 5 ? 'hylätty' : tulos.data.arvosana} (${Number(tulos.data.valitutPisteet)}/${tulos.data.maxPisteet})`)
+    setTimeout(() => dispatch({ type: 'POISTA_TENTTI', payload: { tenttiId: tenttiId, setToValue: setToValue } }), 10000);
   }
 
   return (
     < TenttiContext.Provider value={{
       tenttiDatat: tenttiDatat, dispatch: dispatch, kirjauduttu: tenttiDatat.kirjauduttu,
       tentit: tenttiDatat.tentit, value: value, setToValue: setToValue,
-      setValue: setValue, oikeatVastaukset: oikeatVastaukset, kayttaja: Object.keys(tenttiDatat).length > 0 && tenttiDatat.kayttaja.admin,
-      vastaukset: vastaukset, rekisteröidytään: tenttiDatat.rekisteröidytään, kayttajaVastaukset: tenttiDatat.kayttajaVastaukset,
+      setValue: setValue, oikeatVastaukset: oikeatVastaukset, kayttaja: tenttiDatat.kirjauduttu && tenttiDatat.kayttaja.admin,
+      vastaukset: vastaukset, kayttajaVastaukset: tenttiDatat.kayttajaVastaukset,
       kayttajat: tenttiDatat.kayttajat
     }
     }>

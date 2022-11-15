@@ -4,46 +4,46 @@ import { TenttiContext } from '../App';
 import axios from "axios";
 
 const Kirjaudu = () => {
-    const { rekisteröidytään, dispatch, tenttiDatat } = useContext(TenttiContext)
+    const { dispatch, tenttiDatat, setValue } = useContext(TenttiContext)
     const [tunnus, setTunnus] = useState("")
     const [salasana, setSalasana] = useState("")
 
-    async function lisaaKayttaja() {
-        const isFound = tenttiDatat.kayttajat.some(kayttaja => {
+    async function lisaaKayttaja(e) {
+        e.preventDefault()
+        console.log('sadfasdf')
+        const isFound = tenttiDatat?.kayttajat?.some(kayttaja => {
             if (kayttaja.kayttajatunnus === tunnus) {
                 return true
             }
             return false
         })
-        if (!isFound && rekisteröidytään) {
+        if (!isFound && tenttiDatat.rekisteröidytään) {
             await axios.post('http://localhost:8080/kayttaja/lisaa', { kayttajatunnus: tunnus, salasana: salasana })
-            await axios.post('http://localhost:8080/kayttaja/rekisteroidytaan', { data: false })
             dispatch({
                 type: 'LISAA_KAYTTAJA',
                 payload: { kayttajatunnus: tunnus, salasana: salasana, admin: -1 }
             })
-        } else if (isFound && rekisteröidytään) {
+        } else if (isFound && tenttiDatat.rekisteröidytään) {
             alert('Käyttäjätunnus on varattu')
         }
         else {
-            let kayttaja = tenttiDatat.kayttajat.filter(kayttaja => kayttaja.kayttajatunnus === tunnus && kayttaja.salasana === salasana)
-            if (kayttaja.length === 0) {
+            let kayttaja = await axios.get('http://localhost:8080/kayttaja/hae', { params: { tunnus: tunnus, salasana: salasana } })
+            kayttaja = kayttaja.data.kayttaja
+            if (kayttaja === undefined) {
                 alert('Käyttäjätunnus tai salasana on väärin')
                 return
             }
-            await axios.post('http://localhost:8080/kayttaja/kirjaudu', { kayttaja: kayttaja[0] })
+            kayttaja.kirjauduttu = true
+            localStorage.setItem('kayttaja', JSON.stringify(kayttaja))
+            await axios.post('http://localhost:8080/kayttaja/kirjaudu', { kayttaja: kayttaja })
+            const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
+            dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
             dispatch({
                 type: 'KIRJAUDU',
-                payload: { kayttajatunnus: tunnus, salasana: salasana, admin: -1 }
+                payload: { kayttaja: kayttaja, kayttajatunnus: tunnus, salasana: salasana, admin: -1, setValue: setValue }
             })
         }
     }
-
-    const handleRekisteroidytaan = async () => {
-        await axios.put('http://localhost:8080/kayttaja/rekisteroidytaan', { data: true })
-        dispatch({ type: 'REKISTEROIDYTAAN' })
-    }
-
 
     const handleTunnusChange = (e) => {
         setTunnus(e.target.value)
@@ -54,15 +54,15 @@ const Kirjaudu = () => {
 
     return (
         <div>
-            <p className="otsikko">{rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</p>
+            <p className="otsikko">{tenttiDatat.rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</p>
             <form>
                 <label for='kayttajatunnus'>Käyttäjätunnus<br /></label>
                 <input value={tunnus} onChange={handleTunnusChange} type='text' id="kayttajatunnus" /><br />
                 <label for='salasana'>Salasana<br /></label>
                 <input value={salasana} onChange={handleSalasanaChange} type='password' id="Salasana" /><br />
-                <button onClick={() => lisaaKayttaja()}>{rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</button>
+                <button onClick={(e) => { lisaaKayttaja(e) }}>{tenttiDatat.rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</button>
             </form>
-            {!rekisteröidytään && <button onClick={() => handleRekisteroidytaan()}>Rekisteröidy</button>}
+            {!tenttiDatat.rekisteröidytään && <button onClick={() => dispatch({ type: 'REKISTEROIDYTAAN' })}>Rekisteröidy</button>}
         </div >
     )
 }

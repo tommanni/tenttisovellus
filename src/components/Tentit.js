@@ -36,8 +36,25 @@ const Tentit = () => {
             await axios.post('http://localhost:8080/kysymys/lisaa', { tenttiIndex: value[0].id })
             dispatch({
                 type: 'LISAA_KYSYMYS',
-                payload: tentit.findIndex(tentti1 => tentti1.id === value[0].id)
+                payload: tentit.findIndex(tentti => tentti.id === value[0].id)
             })
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    const otaTenttiKayttoon = async () => {
+        try {
+            const result = await axios.get('http://localhost:8080/vastaus/laske-oikein', { params: { tenttiId: value[0].id } })
+            if (result.data.maara > 0) {
+                await axios.put('http://localhost:8080/tentti/kayttoon', { kaytossa: !value[0].kaytossa, tenttiId: value[0].id })
+                dispatch({
+                    type: 'OTA_TENTTI_KAYTTOON',
+                    payload: tentit.findIndex(tentti => tentti.id === value[0].id)
+                })
+            } else {
+                alert('Aseta vähintään yksi vastaus oikein')
+            }
         } catch (err) {
             console.log(err)
         }
@@ -81,10 +98,15 @@ const Tentit = () => {
                     tenttiId={tentti.id}
                 />)
                 : ""}
-            {kayttaja === -1 ? <Button
+            {kayttaja === -1 && tentit.length > 0 ? <Button
                 style={{ color: '#fff' }}
                 onClick={() => oikeatVastaukset(value[0].id)}>NÄYTÄ VASTAUKSET
-            </Button> : Object.values(value).length !== 0 && <Button startIcon={<AddCircleIcon />} style={{ color: '#fff' }} onClick={() => lisaaKysymys()}>LISÄÄ KYSYMYS</Button>}
+            </Button> : kayttaja === -1 && <p>Kaikki tentit tehty 😊</p>}
+            {kayttaja === 1 && Object.values(value).length !== 0 && <Button startIcon={<AddCircleIcon />} style={{ color: '#fff' }} onClick={() => lisaaKysymys()}>LISÄÄ KYSYMYS</Button>}
+            {kayttaja === 1 && <Button
+                style={{ color: '#fff' }}
+                onClick={() => otaTenttiKayttoon()}>{value[0].kaytossa ? 'KÄYTÖSSÄ' : 'POIS KÄYTÖSTÄ'}
+            </Button>}
         </div>
     )
 }
