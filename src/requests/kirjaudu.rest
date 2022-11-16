@@ -1,0 +1,6 @@
+POST http://localhost:8080/kayttaja/kirjaudu HTTP/1.1
+content-type: application/json
+
+{
+    "kayttaja": {"kayttajatunnus": "sample", "salasana": "salasana", "admin": 1, "kirjauduttu": true}
+}

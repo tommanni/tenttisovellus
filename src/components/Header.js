@@ -8,7 +8,8 @@ const Header = () => {
 
     const handlePoistuClick = async () => {
         try {
-            await axios.post('http://localhost:8080/kayttaja/poistu')
+            const token = localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus)
+            await axios.post('http://localhost:8080/kayttaja/poistu', { kayttajaId: tenttiDatat.kayttaja.id }, { "headers": { 'Authorization': `Bearer ${token}`, 'content-type': 'application/json' } })
             dispatch({ type: 'POISTU', payload: tenttiDatat.kayttaja })
         } catch (err) {
             console.log(err)

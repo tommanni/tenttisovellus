@@ -17,11 +17,11 @@ const App = () => {
   useEffect(() => {
     try {
       const getData = async () => {
-        const kayttaja = JSON.parse(localStorage.getItem('kayttaja'))
-        const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
+        const kayttaja = localStorage.getItem('kayttaja')
+        console.log(JSON.parse(kayttaja))
+        const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: JSON.parse(kayttaja) } });
         console.log(result.data)
-        dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
-
+        dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
       }
       getData()
     } catch (error) {

@@ -1,0 +1,7 @@
+GET http://localhost:8080/kayttaja/hae HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNTAiLCJrYXl0dGFqYXR1bm51cyI6InNhbXBsZSIsImlhdCI6MTY2ODU5ODY1MiwiZXhwIjoxNjY4NjAyMjUyfQ.LGIgJTqKOhxPsQmEGz0ls_ixjU83suYwsfNJ_cXhRHM
+
+{
+    "params": {"tunnus": "sample"}
+}

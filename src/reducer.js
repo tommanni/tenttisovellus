@@ -139,8 +139,9 @@ export function reducer(state, action) {
             } else {
                 action.payload.setValue([action.payload.data.tentit[0].id])
             }
-            let kayttajaData = action.payload.kayttaja
-            return { ...action.payload.data, tietoAlustettu: true, naytaOppilaat: false, kayttaja: kayttajaData, kirjauduttu: kayttajaData.kirjauduttu }
+            let kayttajaData = JSON.parse(localStorage.getItem('kayttaja'))
+
+            return { ...action.payload.data, tietoAlustettu: true, naytaOppilaat: false, kayttaja: kayttajaData, kirjauduttu: kayttajaData?.kirjauduttu }
 
         case 'PAIVITA_TALLENNUSTILA':
             return { ...state, tallennetaanko: action.payload }

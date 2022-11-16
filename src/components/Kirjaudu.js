@@ -10,7 +10,6 @@ const Kirjaudu = () => {
 
     async function lisaaKayttaja(e) {
         e.preventDefault()
-        console.log('sadfasdf')
         const isFound = tenttiDatat?.kayttajat?.some(kayttaja => {
             if (kayttaja.kayttajatunnus === tunnus) {
                 return true
@@ -18,7 +17,9 @@ const Kirjaudu = () => {
             return false
         })
         if (!isFound && tenttiDatat.rekisteröidytään) {
-            await axios.post('http://localhost:8080/kayttaja/lisaa', { kayttajatunnus: tunnus, salasana: salasana })
+            let data = await axios.post('http://localhost:8080/kayttaja/lisaa', { kayttajatunnus: tunnus, salasana: salasana })
+            console.log(data.data.data.token)
+            localStorage.setItem(tunnus, data.data.data.token)
             dispatch({
                 type: 'LISAA_KAYTTAJA',
                 payload: { kayttajatunnus: tunnus, salasana: salasana, admin: -1 }
@@ -27,13 +28,17 @@ const Kirjaudu = () => {
             alert('Käyttäjätunnus on varattu')
         }
         else {
-            let kayttaja = await axios.get('http://localhost:8080/kayttaja/hae', { params: { tunnus: tunnus, salasana: salasana } })
+            let token = localStorage.getItem(tunnus)
+            console.log(token)
+            let kayttaja = await axios.get('http://localhost:8080/kayttaja/hae', { params: { kayttajatunnus: tunnus } })
+            console.log(kayttaja)
             kayttaja = kayttaja.data.kayttaja
             if (kayttaja === undefined) {
                 alert('Käyttäjätunnus tai salasana on väärin')
                 return
             }
             kayttaja.kirjauduttu = true
+            kayttaja.salasana = salasana
             localStorage.setItem('kayttaja', JSON.stringify(kayttaja))
             await axios.post('http://localhost:8080/kayttaja/kirjaudu', { kayttaja: kayttaja })
             const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });

@@ -10,8 +10,9 @@ const Oppilas = ({ oppilas, setOppilaat, setFilter }) => {
 
     const poistaOppilas = async () => {
         if (window.confirm(`Poista ${oppilas.kayttajatunnus}?`)) {
-            console.log(oppilas.id)
-            await axios.delete('http://localhost:8080/kayttaja/poista', { data: { kayttajaId: oppilas.id } })
+            let token = localStorage.getItem(oppilas.kayttajatunnus)
+            await axios.delete('http://localhost:8080/kayttaja/poista', { "headers": { 'Authorization': `Bearer ${token}`, 'content-type': 'application/json' } })
+            localStorage.removeItem(oppilas.kayttajatunnus)
             dispatch({
                 type: 'POISTA_KAYTTAJA',
                 payload: { id: oppilas.id, setOppilaat: setOppilaat }
