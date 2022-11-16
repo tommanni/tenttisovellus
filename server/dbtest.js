@@ -14,6 +14,7 @@ const lisaaTentti = async () => {
     } catch (error) {
         console.log('virhetilanne', error)
     }
+    pool.end()
 }
 //lisaaTentti()
 
@@ -23,15 +24,17 @@ const poistaTentti = async () => {
     } catch (error) {
         console.log('virhetilanne', error)
     }
+    pool.end()
 }
 //poistaTentti()
 
 const muokkaaTentti = async () => {
     try {
-        await pool.query("UPDATE tentit SET name = 'Rubyn perusteet' WHERE id = 828479")
+        await pool.query("UPDATE tentit SET name = 'Ruby' WHERE id = 828479")
     } catch (error) {
         console.log('virhetilanne', error)
     }
+    pool.end()
 }
 //muokkaaTentti()
 
@@ -42,6 +45,7 @@ const haeTentit = async () => {
     } catch (error) {
         console.log('virhetilanne', error)
     }
+    pool.end()
 }
 //haeTentit()
 
@@ -52,6 +56,7 @@ const haeTentitID = async () => {
     } catch (error) {
         console.log('virhetilanne', error)
     }
+    pool.end()
 }
 //haeTentitID()
 //pool.query('ALTER TABLE tentit ADD voimassa BOOLEAN')
@@ -61,16 +66,15 @@ const lisaaTentit = async () => {
     const text = 'INSERT INTO tentit (name, date, voimassa) VALUES ($1, $2, $3)'
     const kielet = ['HTML', 'CSS', 'Python', 'Java', 'JavaScript', 'Swift', 'C++', 'C#', 'R', 'Golang (Go)']
     try {
-        for (let i = 7; i < 17; i++) {
-            let date = ['2022', '10', i]
-            let values = [kielet[i - 7], date.join('-'), Math.random() < 0.5]
-            await pool.query(text, values)
+        for (let i = 0; i < 10; i++) {
+            await pool.query(text, [kielet[i], ['2022', '10', i + 7].join('-'), Math.random() < 0.5])
         }
     } catch (error) {
         console.log('virhetilanne', error)
     }
+    pool.end()
 }
-//lisaaTentit()
+lisaaTentit()
 
 const haeTentitPaivamaaralla = async () => {
     try {
@@ -79,6 +83,7 @@ const haeTentitPaivamaaralla = async () => {
     } catch (error) {
         console.log('virhetilanne', error)
     }
+    pool.end()
 }
 //haeTentitPaivamaaralla()
 
@@ -89,8 +94,9 @@ const haeTentitJotkaVoimassa = async () => {
     } catch (error) {
         console.log('virhetilanne', error)
     }
+    pool.end()
 }
-haeTentitJotkaVoimassa()
+//haeTentitJotkaVoimassa()
 /* pool.query("DELETE FROM tentit", (err, res) => {
     console.log(err, res)
 }) */

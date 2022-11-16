@@ -1,6 +1,10 @@
 const express = require('express')
 const router = express.Router()
 const { Pool } = require('pg')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
+const saltRounds = 10;
+require('dotenv').config()
 
 const pool = new Pool({
     user: 'postgres',
@@ -10,23 +14,84 @@ const pool = new Pool({
     port: 5432,
 })
 
-router.post('/lisaa', async (req, res) => {
+router.post('/kirjaudu', async (req, res, next) => {
+    const { kayttaja } = req.body
+
+    let existingUser;
+    let passwordMatch = false
     try {
-        await pool.query('BEGIN')
-        await pool.query('INSERT INTO käyttäjä (kayttajatunnus, salasana, admin, kirjauduttu) VALUES ($1, $2, -1, false)', [req.body.kayttajatunnus, req.body.salasana])
-        await pool.query('UPDATE rekisteröidytään SET rekisteröidytään = false')
-        await pool.query('COMMIT')
-        res.status(200).send('Käyttäjän lisäys onnistui')
+        let result = await pool.query("select * from käyttäjä where kayttajatunnus=$1", [kayttaja.kayttajatunnus])
+        existingUser = { salasana: result.rows[0].salasana, kayttajatunnus: result.rows[0].kayttajatunnus, id: result.rows[0].id }
+        passwordMatch = await bcrypt.compare(kayttaja.salasana, existingUser.salasana)
+        await pool.query('UPDATE käyttäjä SET kirjauduttu = true WHERE id = ($1)', [kayttaja.id])
     } catch (err) {
-        res.status(500).send('Käyttäjän lisäys epäonnistui')
+        res.status(500).send('Kirjautuminen epäonnistui')
+        return next(err)
     }
 
+    if (!existingUser || !passwordMatch) {
+        const error = Error('Wrong details please check at once')
+        return next(error)
+    }
+    let token;
+    try {
+        token = jwt.sign(
+            { userId: existingUser.id, kayttajatunnus: existingUser.kayttajatunnus },
+            process.env.MY_SECRET
+        )
+    } catch (err) {
+        console.log(err)
+        const error = new Error("Error! Something went wrong.");
+        return next(error);
+    }
+
+    res
+        .status(200)
+        .json({
+            success: true,
+            data: {
+                userId: existingUser.id,
+                kayttajatunnus: existingUser.kayttajatunnus,
+                token: token
+            }
+        })
+})
+
+router.post('/lisaa', async (req, res, next) => {
+    const { kayttajatunnus, salasana } = req.body
+    let result;
+    try {
+        const hashed = await bcrypt.hash(salasana, saltRounds)
+        await pool.query('BEGIN')
+        result = await pool.query('INSERT INTO käyttäjä (kayttajatunnus, salasana, admin, kirjauduttu) VALUES ($1, $2, -1, false) RETURNING id', [kayttajatunnus, hashed])
+        await pool.query('COMMIT')
+    } catch (err) {
+        res.status(500).send('Käyttäjän lisäys epäonnistui')
+        return next(err)
+    }
+    let token;
+    try {
+        token = jwt.sign(
+            { userId: result.rows[0].id, kayttajatunnus: kayttajatunnus }, process.env.MY_SECRET)
+    } catch (err) {
+        const error = new Error("Error! Something went wrong.")
+        return next(error)
+    }
+    res
+        .status(201)
+        .json({
+            success: true,
+            data: {
+                userId: result.rows[0].id,
+                kayttajatunnus: kayttajatunnus, token: token
+            }
+        })
 })
 
 router.get('/hae', async (req, res) => {
+    console.log(req.decoded)
     try {
-        const kayttaja = await pool.query('SELECT * FROM käyttäjä WHERE kayttajatunnus = ($1)', [req.query.tunnus])
-        console.log(kayttaja.rows[0])
+        const kayttaja = await pool.query('SELECT * FROM käyttäjä WHERE kayttajatunnus = ($1)', [req.query.kayttajatunnus])
         res.status(200).send({ kayttaja: kayttaja.rows[0] })
     } catch (err) {
         res.status(500).send('Käyttäjän haku epäonnistui')
@@ -34,11 +99,25 @@ router.get('/hae', async (req, res) => {
 
 })
 
-router.delete('/poista', async (req, res) => {
+const verifyToken = (req, res, next) => {
+
+    const token = req.headers.authorization?.split(' ')[1];
+    console.log("token", token)
+    //Authorization: 'Bearer TOKEN'
+    if (!token) {
+        res.status(200).json({ success: false, message: "Error!Token was not provided." });
+    }
+    //Decoding the token
+    const decodedToken = jwt.verify(token, process.env.MY_SECRET);
+    req.decoded = decodedToken
+    next()
+}
+
+router.delete('/poista', verifyToken, async (req, res) => {
     try {
         await pool.query('BEGIN')
-        await pool.query('DELETE FROM user_answer WHERE user_id = ($1)', [req.body.kayttajaId])
-        await pool.query('DELETE FROM käyttäjä WHERE id = ($1)', [req.body.kayttajaId])
+        await pool.query('DELETE FROM user_answer WHERE user_id = ($1)', [req.decoded.userId])
+        await pool.query('DELETE FROM käyttäjä WHERE id = ($1)', [req.decoded.userId])
         await pool.query('COMMIT')
         console.log(req.body.kayttajaId)
         res.status(200).send('Käyttäjän poisto onnistui')
@@ -48,18 +127,9 @@ router.delete('/poista', async (req, res) => {
 
 })
 
-router.post('/kirjaudu', async (req, res) => {
+router.post('/poistu', verifyToken, async (req, res) => {
     try {
-        await pool.query('UPDATE käyttäjä SET kirjauduttu = true WHERE id = ($1)', [req.body.kayttaja.id])
-        res.status(200).send('Kirjauduttu onnistuneesti')
-    } catch (err) {
-        res.status(500).send('Kirjautuminen epäonnistui')
-    }
-})
-
-router.post('/poistu', async (req, res) => {
-    try {
-        await pool.query('UPDATE käyttäjä SET kirjauduttu = false WHERE kirjauduttu = true')
+        await pool.query('UPDATE käyttäjä SET kirjauduttu = false WHERE kirjauduttu = true AND id = $1', [req.body.kayttajaId])
         res.status(200).send('Kirjauduttu ulos onnistuneesti')
     } catch (err) {
         res.status(500).send('Ulos kirjautuminen epäonnistui')
