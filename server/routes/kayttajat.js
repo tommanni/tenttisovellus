@@ -14,6 +14,21 @@ const pool = new Pool({
     port: 5432,
 })
 
+let refreshTokens = []
+
+router.post('/token', async (req, res) => {
+    const refreshToken = req.body.token
+    console.log('refresh', refreshToken)
+    if (refreshToken === null) return res.status(401).send('Tokenia ei tarjottu')
+    if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
+    jwt.verify(refreshToken, process.env.REFRESH_ACCESS_TOKEN_SECRET, (err, user) => {
+        console.log(user)
+        //if (err) return res.status(403).send(err)
+        const accessToken = jwt.sign({ userId: user.userId, kayttajatunnus: user.kayttajatunnus }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" })
+        res.json({ token: accessToken })
+    })
+})
+
 router.post('/kirjaudu', async (req, res, next) => {
     const { kayttaja } = req.body
 
@@ -30,15 +45,22 @@ router.post('/kirjaudu', async (req, res, next) => {
     }
 
     if (!existingUser || !passwordMatch) {
-        const error = Error('Wrong details please check at once')
-        return next(error)
+        return res.status(500)
     }
     let token;
+    let refreshToken
     try {
         token = jwt.sign(
             { userId: existingUser.id, kayttajatunnus: existingUser.kayttajatunnus },
-            process.env.MY_SECRET
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: '1h' }
         )
+        refreshToken = jwt.sign(
+            { userId: existingUser.id, kayttajatunnus: existingUser.kayttajatunnus },
+            process.env.REFRESH_ACCESS_TOKEN_SECRET
+        )
+        refreshTokens.push(refreshToken)
+        console.log(refreshTokens)
     } catch (err) {
         console.log(err)
         const error = new Error("Error! Something went wrong.");
@@ -52,7 +74,8 @@ router.post('/kirjaudu', async (req, res, next) => {
             data: {
                 userId: existingUser.id,
                 kayttajatunnus: existingUser.kayttajatunnus,
-                token: token
+                token: token,
+                refreshToken: refreshToken
             }
         })
 })
@@ -72,7 +95,10 @@ router.post('/lisaa', async (req, res, next) => {
     let token;
     try {
         token = jwt.sign(
-            { userId: result.rows[0].id, kayttajatunnus: kayttajatunnus }, process.env.MY_SECRET)
+            { userId: result.rows[0].id, kayttajatunnus: kayttajatunnus },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: "1h" }
+        )
     } catch (err) {
         const error = new Error("Error! Something went wrong.")
         return next(error)
@@ -83,15 +109,24 @@ router.post('/lisaa', async (req, res, next) => {
             success: true,
             data: {
                 userId: result.rows[0].id,
-                kayttajatunnus: kayttajatunnus, token: token
+                kayttajatunnus: kayttajatunnus,
+                token: token
             }
         })
 })
 
 router.get('/hae', async (req, res) => {
-    console.log(req.decoded)
     try {
+        console.log(req.query)
         const kayttaja = await pool.query('SELECT * FROM käyttäjä WHERE kayttajatunnus = ($1)', [req.query.kayttajatunnus])
+        console.log(kayttaja)
+        let passwordMatch = await bcrypt.compare(req.query.salasana, kayttaja.rows[0].salasana)
+        console.log('asdfasdf')
+        console.log(passwordMatch)
+        if (!passwordMatch) {
+            return res.send('fail')
+        }
+        console.log(kayttaja.rows)
         res.status(200).send({ kayttaja: kayttaja.rows[0] })
     } catch (err) {
         res.status(500).send('Käyttäjän haku epäonnistui')
@@ -102,13 +137,17 @@ router.get('/hae', async (req, res) => {
 const verifyToken = (req, res, next) => {
 
     const token = req.headers.authorization?.split(' ')[1];
-    console.log("token", token)
     //Authorization: 'Bearer TOKEN'
     if (!token) {
         res.status(200).json({ success: false, message: "Error!Token was not provided." });
     }
     //Decoding the token
-    const decodedToken = jwt.verify(token, process.env.MY_SECRET);
+    let decodedToken;
+    try {
+        decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    } catch (err) {
+        res.sendStatus(403)
+    }
     req.decoded = decodedToken
     next()
 }
@@ -116,21 +155,21 @@ const verifyToken = (req, res, next) => {
 router.delete('/poista', verifyToken, async (req, res) => {
     try {
         await pool.query('BEGIN')
-        await pool.query('DELETE FROM user_answer WHERE user_id = ($1)', [req.decoded.userId])
-        await pool.query('DELETE FROM käyttäjä WHERE id = ($1)', [req.decoded.userId])
+        await pool.query('DELETE FROM user_answer WHERE user_id = ($1)', [req.body.kayttajaId])
+        await pool.query('DELETE FROM käyttäjä WHERE id = ($1)', [req.body.kayttajaId])
         await pool.query('COMMIT')
-        console.log(req.body.kayttajaId)
         res.status(200).send('Käyttäjän poisto onnistui')
     } catch (err) {
-        res.status(500).send('Käyttäjän poisto epäonnistui')
+        console.log('err')
     }
 
 })
 
-router.post('/poistu', verifyToken, async (req, res) => {
+router.post('/poistu', async (req, res) => {
     try {
+        refreshTokens = refreshTokens.filter(token => token !== req.body.token)
         await pool.query('UPDATE käyttäjä SET kirjauduttu = false WHERE kirjauduttu = true AND id = $1', [req.body.kayttajaId])
-        res.status(200).send('Kirjauduttu ulos onnistuneesti')
+        res.status(204).send('Kirjauduttu ulos onnistuneesti')
     } catch (err) {
         res.status(500).send('Ulos kirjautuminen epäonnistui')
     }
