@@ -17,9 +17,7 @@ const Kirjaudu = () => {
             return false
         })
         if (!isFound && tenttiDatat.rekisteröidytään) {
-            let data = await axios.post('http://localhost:8080/kayttaja/lisaa', { kayttajatunnus: tunnus, salasana: salasana })
-            console.log(data.data.data.token)
-            localStorage.setItem(tunnus, data.data.data.token)
+            await axios.post('http://localhost:8080/kayttaja/lisaa', { kayttajatunnus: tunnus, salasana: salasana })
             dispatch({
                 type: 'LISAA_KAYTTAJA',
                 payload: { kayttajatunnus: tunnus, salasana: salasana, admin: -1 }
@@ -30,8 +28,8 @@ const Kirjaudu = () => {
         else {
             let token = localStorage.getItem(tunnus)
             console.log(token)
-            let kayttaja = await axios.get('http://localhost:8080/kayttaja/hae', { params: { kayttajatunnus: tunnus } })
-            console.log(kayttaja)
+            let kayttaja = await axios.get('http://localhost:8080/kayttaja/hae', { params: { kayttajatunnus: tunnus, salasana: salasana } })
+            console.log(kayttaja.data)
             kayttaja = kayttaja.data.kayttaja
             if (kayttaja === undefined) {
                 alert('Käyttäjätunnus tai salasana on väärin')
@@ -40,7 +38,9 @@ const Kirjaudu = () => {
             kayttaja.kirjauduttu = true
             kayttaja.salasana = salasana
             localStorage.setItem('kayttaja', JSON.stringify(kayttaja))
-            await axios.post('http://localhost:8080/kayttaja/kirjaudu', { kayttaja: kayttaja })
+            let data = await axios.post('http://localhost:8080/kayttaja/kirjaudu', { kayttaja: kayttaja })
+            console.log(data.data.data.token)
+            localStorage.setItem(tunnus, JSON.stringify({ token: data.data.data.token, refreshToken: data.data.data.refreshToken }))
             const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
             dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
             dispatch({

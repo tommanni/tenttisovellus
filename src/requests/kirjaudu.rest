@@ -2,5 +2,22 @@ POST http://localhost:8080/kayttaja/kirjaudu HTTP/1.1
 content-type: application/json
 
 {
-    "kayttaja": {"kayttajatunnus": "sample", "salasana": "salasana", "admin": 1, "kirjauduttu": true}
+    "kayttaja": {"kayttajatunnus": "kalle", "salasana": "koodaaja", "admin": 1, "kirjauduttu": true}
+}
+
+###
+
+POST http://localhost:8080/kayttaja/poistu HTTP/1.1
+Content-Type: application/json
+
+{
+    "kayttajaId": "173", "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzMiLCJrYXl0dGFqYXR1bm51cyI6ImthbGxlIiwiaWF0IjoxNjY4Njk0NDg3fQ.sA_3gl9pkCGx9KGLAx0qZjCTbAfMypCYlEU17inDKO0"
+}
+
+###
+POST http://localhost:8080/kayttaja/token HTTP/1.1
+Content-Type: application/json
+
+{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzMiLCJrYXl0dGFqYXR1bm51cyI6ImthbGxlIiwiaWF0IjoxNjY4Njk5MzcwfQ.MHX9kRn-a3avFWEVHo233La9z5wPzE4xgA5sfaMVdV0"
 }

@@ -5,13 +5,25 @@ import { TenttiContext } from '../App';
 import axios from 'axios';
 
 const Oppilas = ({ oppilas, setOppilaat, setFilter }) => {
-    const { dispatch } = useContext(TenttiContext)
+    const { dispatch, tenttiDatat } = useContext(TenttiContext)
     const [suoritukset, setSuoritukset] = useState([])
 
     const poistaOppilas = async () => {
         if (window.confirm(`Poista ${oppilas.kayttajatunnus}?`)) {
-            let token = localStorage.getItem(oppilas.kayttajatunnus)
-            await axios.delete('http://localhost:8080/kayttaja/poista', { "headers": { 'Authorization': `Bearer ${token}`, 'content-type': 'application/json' } })
+            let token = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
+            console.log('token', token)
+            let res;
+            try {
+                res = await axios.delete('http://localhost:8080/kayttaja/poista', { "headers": { 'Authorization': `Bearer ${token.token}`, 'content-type': 'application/json' }, data: { kayttajaId: oppilas.id } })
+            } catch (err) {
+                if (err.response.status === 403) {
+                    let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
+                    let newToken = await axios.post('http://localhost:8080/kayttaja/token', { token: tokens.refreshToken })
+                    console.log(newToken.data.token)
+                    localStorage.setItem(tenttiDatat.kayttaja.kayttajatunnus, JSON.stringify({ token: newToken.data.token, refreshToken: tokens.refreshToken }))
+                    await axios.delete('http://localhost:8080/kayttaja/poista', { "headers": { 'Authorization': `Bearer ${newToken.data.token}`, 'content-type': 'application/json' }, "data": { "kayttajaId": oppilas.id } })
+                }
+            }
             localStorage.removeItem(oppilas.kayttajatunnus)
             dispatch({
                 type: 'POISTA_KAYTTAJA',
