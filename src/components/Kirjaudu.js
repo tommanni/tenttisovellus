@@ -27,9 +27,7 @@ const Kirjaudu = () => {
         }
         else {
             let token = localStorage.getItem(tunnus)
-            console.log(token)
             let kayttaja = await axios.get('http://localhost:8080/kayttaja/hae', { params: { kayttajatunnus: tunnus, salasana: salasana } })
-            console.log(kayttaja.data)
             kayttaja = kayttaja.data.kayttaja
             if (kayttaja === undefined) {
                 alert('Käyttäjätunnus tai salasana on väärin')
@@ -39,7 +37,6 @@ const Kirjaudu = () => {
             kayttaja.salasana = salasana
             localStorage.setItem('kayttaja', JSON.stringify(kayttaja))
             let data = await axios.post('http://localhost:8080/kayttaja/kirjaudu', { kayttaja: kayttaja })
-            console.log(data.data.data.token)
             localStorage.setItem(tunnus, JSON.stringify({ token: data.data.data.token, refreshToken: data.data.data.refreshToken }))
             const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
             dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })

@@ -84,7 +84,6 @@ export function reducer(state, action) {
             } else {
                 tentit9.kayttajaVastaukset = tentit9.kayttajaVastaukset.filter(({ user_id, answer_id }) => !(Number(user_id) === Number(action.payload.kayttajaId) && Number(answer_id) === Number(action.payload.vastausId)))
             }
-            console.log(action.payload, tentit9.kayttajaVastaukset)
             return tentit9
 
         case 'LISAA_KAYTTAJA':
@@ -135,7 +134,7 @@ export function reducer(state, action) {
         case 'ALUSTA_DATA':
             const tenttiId = JSON.parse(localStorage.getItem('tenttiId'))
             if (tenttiId !== null) {
-                action.payload.setValue([action.payload.data.tentit.find(tentti => Number(tentti.id) === tenttiId)])
+                action.payload.setValue([action.payload.data.tentit?.find(tentti => Number(tentti.id) === tenttiId)])
             } else {
                 action.payload.setValue([action.payload.data.tentit[0].id])
             }

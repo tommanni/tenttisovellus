@@ -66,7 +66,7 @@ const Tentit = () => {
                 <>
                     <Button style={{ color: '#fff' }} key={tentti.id}
                         onClick={() => setToValue(tentti.id)}>{tentti.nimi}</Button>
-                    {kayttaja === 1 ? <input key={tentti.id} placeholder=' vaihda tentin nimi' type="text" onChange={(event) => {
+                    {kayttaja === 1 ? <input key={tentti.nimi} placeholder=' vaihda tentin nimi' type="text" onChange={(event) => {
                         const muutaTentinNimi = async (tenttiId, nimi) => {
                             try {
                                 await axios.put('http://localhost:8080/tentti/nimi-muuttui', { tenttiId: tenttiId, nimi: nimi })
@@ -85,7 +85,7 @@ const Tentit = () => {
                         muutaTentinNimi(tentti.id, event.target.value)
 
                     }} /> : ""}
-                    {kayttaja === 1 ? <Button key={tentti.id} style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => poistaTentti(tentti.nimi, tentti.id)} /> : ""}
+                    {kayttaja === 1 ? <Button key={tentti.id + 100} style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => poistaTentti(tentti.nimi, tentti.id)} /> : ""}
                 </>
             )
             }
@@ -93,7 +93,7 @@ const Tentit = () => {
             {Object.values(value).length !== 0 ?
 
                 value.map(tentti => <Tentti
-                    key={tentti.id}
+                    key={tentti.id + 1000}
                     tentti={tentti}
                     tenttiId={tentti.id}
                 />)

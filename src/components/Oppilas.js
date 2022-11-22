@@ -12,9 +12,9 @@ const Oppilas = ({ oppilas, setOppilaat, setFilter }) => {
         if (window.confirm(`Poista ${oppilas.kayttajatunnus}?`)) {
             let token = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
             console.log('token', token)
-            let res;
+
             try {
-                res = await axios.delete('http://localhost:8080/kayttaja/poista', { "headers": { 'Authorization': `Bearer ${token.token}`, 'content-type': 'application/json' }, data: { kayttajaId: oppilas.id } })
+                await axios.delete('http://localhost:8080/kayttaja/poista', { "headers": { 'Authorization': `Bearer ${token.token}`, 'content-type': 'application/json' }, data: { kayttajaId: oppilas.id } })
             } catch (err) {
                 if (err.response.status === 403) {
                     let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
@@ -34,28 +34,37 @@ const Oppilas = ({ oppilas, setOppilaat, setFilter }) => {
     }
 
     useEffect(() => {
+        let token = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
         const haeSuoritukset = async () => {
-            const suoritukset = await axios.get('http://localhost:8080/kayttaja/hae-suoritus', { params: { kayttajaId: oppilas.id } })
-            console.log(suoritukset.data)
-            setSuoritukset(suoritukset.data)
+            try {
+                let suoritukset = await axios.get('http://localhost:8080/kayttaja/hae-suoritus', { "headers": { 'Authorization': `Bearer ${token.token}`, 'content-type': 'application/json' }, data: { kayttajaId: oppilas.id } })
+                setSuoritukset(suoritukset.data)
+            } catch (err) {
+                if (err.response.status === 403) {
+                    let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
+                    let newToken = await axios.post('http://localhost:8080/kayttaja/token', { token: tokens.refreshToken })
+                    localStorage.setItem(tenttiDatat.kayttaja.kayttajatunnus, JSON.stringify({ token: newToken.data.token, refreshToken: tokens.refreshToken }))
+                    let suoritukset = await axios.get('http://localhost:8080/kayttaja/hae-suoritus', { "headers": { 'Authorization': `Bearer ${newToken.token}`, 'content-type': 'application/json' }, data: { kayttajaId: oppilas.id } })
+                    setSuoritukset(suoritukset.data)
+                    console.log(suoritukset.data)
+                }
+                console.log('hello')
+            }
         }
         haeSuoritukset()
     }, [oppilas])
 
-    //todo:
-    //-oppilaan poistaminen
-    //-oppilaan suoritukset
     return (
         <div>
             {/* //yksittäisen oppilaan tiedot */}
             <h1>{oppilas.kayttajatunnus}<Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} className='poista-oppilas' onClick={() => poistaOppilas()} ></Button></h1>
             <h2>{'Suoritetut tentit'}</h2>
             <ol>
-                {suoritukset?.suoritetut?.length > 0 ? suoritukset.suoritetut.map(suoritus => <li style={{ border: 'none' }}><div>{suoritus.nimi} {suoritus.grade > 4 ? suoritus.grade : 'Hylätty'}</div></li>) : 'Ei suoritettuja tenttejä'}
+                {suoritukset?.suoritetut?.length > 0 ? suoritukset.suoritetut.map(suoritus => <li key={suoritus.nimi} style={{ border: 'none' }}><div>{suoritus.nimi} {suoritus.grade > 4 ? suoritus.grade : 'Hylätty'}</div></li>) : 'Ei suoritettuja tenttejä'}
             </ol>
             <h2>{'Suorittamattomat tentit'}</h2>
             <ol>
-                {suoritukset?.suorittamattomat?.length > 0 ? suoritukset.suorittamattomat.map(suoritus => <li style={{ border: 'none' }}><div>{suoritus.nimi}</div></li>) : 'Ei suorittamattomia tenttejä'}
+                {suoritukset?.suorittamattomat?.length > 0 ? suoritukset.suorittamattomat.map(suoritus => <li key={suoritus.nimi} style={{ border: 'none' }}><div>{suoritus.nimi}</div></li>) : 'Ei suorittamattomia tenttejä'}
             </ol>
         </div>
     )

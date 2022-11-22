@@ -17,9 +17,11 @@ const App = () => {
   useEffect(() => {
     try {
       const getData = async () => {
-        const kayttaja = localStorage.getItem('kayttaja')
-        const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: JSON.parse(kayttaja) } });
-        dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
+        const kayttaja = JSON.parse(localStorage.getItem('kayttaja'))
+        if (kayttaja?.kirjauduttu) {
+          const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
+          dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
+        }
       }
       getData()
     } catch (error) {
@@ -54,7 +56,7 @@ const App = () => {
     }
     }>
       <div>
-        {tenttiDatat.tietoAlustettu && <Header />}
+        {(tenttiDatat.tietoAlustettu || !tenttiDatat.kirjauduttu) && <Header />}
         {tenttiDatat.naytaOppilaat && tenttiDatat.kirjauduttu && <Oppilastiedot />}
         {tenttiDatat.tietoAlustettu && tenttiDatat.kirjauduttu && !tenttiDatat.naytaOppilaat && <Tentit />}
         <div className='kirjaudu'>

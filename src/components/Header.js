@@ -7,12 +7,17 @@ const Header = () => {
     const { kirjauduttu, dispatch, tenttiDatat, kayttaja } = useContext(TenttiContext)
 
     const handlePoistuClick = async () => {
+        const token = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
         try {
-            const token = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
-            await axios.post('http://localhost:8080/kayttaja/poistu', { kayttajaId: tenttiDatat.kayttaja.id, token: token.refreshToken })
+            await axios.post('http://localhost:8080/kayttaja/poistu', { kayttajaId: tenttiDatat.kayttaja.id, token: token.refreshToken }, { "headers": { 'Authorization': `Bearer ${token.token}`, 'content-type': 'application/json' } })
             dispatch({ type: 'POISTU', payload: tenttiDatat.kayttaja })
         } catch (err) {
-            console.log(err)
+            if (err.response.status === 403) {
+                let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
+                let newToken = await axios.post('http://localhost:8080/kayttaja/token', { token: tokens.refreshToken })
+                localStorage.setItem(tenttiDatat.kayttaja.kayttajatunnus, JSON.stringify({ token: newToken.data.token, refreshToken: tokens.refreshToken }))
+                await axios.post('http://localhost:8080/kayttaja/poistu', { kayttajaId: tenttiDatat.kayttaja.id, token: token.refreshToken }, { "headers": { 'Authorization': `Bearer ${newToken.data.token}`, 'content-type': 'application/json' } })
+            }
         }
     }
 
