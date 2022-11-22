@@ -18,11 +18,9 @@ let refreshTokens = []
 
 router.post('/token', async (req, res) => {
     const refreshToken = req.body.token
-    console.log('refresh', refreshToken)
     if (refreshToken === null) return res.status(401).send('Tokenia ei tarjottu')
     if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
     jwt.verify(refreshToken, process.env.REFRESH_ACCESS_TOKEN_SECRET, (err, user) => {
-        console.log(user)
         //if (err) return res.status(403).send(err)
         const accessToken = jwt.sign({ userId: user.userId, kayttajatunnus: user.kayttajatunnus }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" })
         res.json({ token: accessToken })
@@ -60,9 +58,7 @@ router.post('/kirjaudu', async (req, res, next) => {
             process.env.REFRESH_ACCESS_TOKEN_SECRET
         )
         refreshTokens.push(refreshToken)
-        console.log(refreshTokens)
     } catch (err) {
-        console.log(err)
         const error = new Error("Error! Something went wrong.");
         return next(error);
     }
@@ -117,12 +113,8 @@ router.post('/lisaa', async (req, res, next) => {
 
 router.get('/hae', async (req, res) => {
     try {
-        console.log(req.query)
         const kayttaja = await pool.query('SELECT * FROM käyttäjä WHERE kayttajatunnus = ($1)', [req.query.kayttajatunnus])
-        console.log(kayttaja)
         let passwordMatch = await bcrypt.compare(req.query.salasana, kayttaja.rows[0].salasana)
-        console.log('asdfasdf')
-        console.log(passwordMatch)
         if (!passwordMatch) {
             return res.send('fail')
         }
@@ -134,9 +126,27 @@ router.get('/hae', async (req, res) => {
 
 })
 
-const verifyToken = (req, res, next) => {
+const isAdmin = async (req, res, next) => {
+    try {
+        let result = await pool.query("SELECT * FROM käyttäjä WHERE id = $1 ", [req.decoded?.userId])
+        let admin = result.rows[0].admin
+        if (admin !== 1) {
+            res.status(401).send("no access!")
+            next()
+        } else {
+            next()
+        }
+        //res.send('Tais datan tallennus onnistua')    
+    }
+    catch (e) {
+        res.status(500).send(e)
+    }
 
+}
+
+const verifyToken = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
+    console.log('req.body', req.body)
     //Authorization: 'Bearer TOKEN'
     if (!token) {
         res.status(200).json({ success: false, message: "Error!Token was not provided." });
@@ -152,7 +162,7 @@ const verifyToken = (req, res, next) => {
     next()
 }
 
-router.delete('/poista', verifyToken, async (req, res) => {
+router.delete('/poista', verifyToken, isAdmin, async (req, res) => {
     try {
         await pool.query('BEGIN')
         await pool.query('DELETE FROM user_answer WHERE user_id = ($1)', [req.body.kayttajaId])
@@ -165,7 +175,7 @@ router.delete('/poista', verifyToken, async (req, res) => {
 
 })
 
-router.post('/poistu', async (req, res) => {
+router.post('/poistu', verifyToken, async (req, res) => {
     try {
         refreshTokens = refreshTokens.filter(token => token !== req.body.token)
         await pool.query('UPDATE käyttäjä SET kirjauduttu = false WHERE kirjauduttu = true AND id = $1', [req.body.kayttajaId])
@@ -189,7 +199,7 @@ router.get('/hae-tulos', async (req, res) => {
     }
 })
 
-router.get('/hae-suoritus', async (req, res) => {
+router.get('/hae-suoritus', verifyToken, isAdmin, async (req, res) => {
     try {
         console.log('sadfasdfdas')
         const suoritetut = await pool.query('SELECT (SELECT nimi FROM exam WHERE id = F.exam_id), grade FROM finished_exam F WHERE user_id = ($1)', [req.query.kayttajaId])
@@ -197,11 +207,11 @@ router.get('/hae-suoritus', async (req, res) => {
         const suorittamattomat = await pool.query('SELECT nimi FROM exam WHERE NOT id in (SELECT exam_id FROM finished_exam WHERE user_id = ($1))', [req.query.kayttajaId])
         res.status(200).send({ suoritetut: suoritetut.rows, suorittamattomat: suorittamattomat.rows })
     } catch (err) {
-        res.status(500).send('Tuloksen haku epäonnistui')
+        console.log(err)
     }
 })
 
-router.put('/aseta-valinta', async (req, res) => {
+router.post('/aseta-valinta', verifyToken, async (req, res) => {
     try {
         await pool.query('BEGIN')
         if (!req.body.valinta) {
@@ -212,6 +222,7 @@ router.put('/aseta-valinta', async (req, res) => {
         await pool.query('COMMIT')
         res.status(200).send('Valinnan asetus onnistui')
     } catch (err) {
+        console.log(err)
         res.status(500).send('Valinnan asetus epäonnistui')
     }
 })

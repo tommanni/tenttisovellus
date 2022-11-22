@@ -1,9 +1,11 @@
 const fs = require('fs');
 const { Pool } = require('pg')
 const express = require('express')  //Jos ei toimi, niin "npm install express"
+const https = require('https')
 const app = express()
 const port = 8080
 const cors = require('cors');
+
 
 const pool = new Pool({
     user: 'postgres',
@@ -18,7 +20,7 @@ app.use(express.json());
 
 const tenttiRouter = require('./routes/tentit')
 const kysymysRouter = require('./routes/kysymykset')
-const vastausRouter = require('./routes/vastaukset');
+const vastausRouter = require('./routes/vastaukset')
 const kayttajaRouter = require('./routes/kayttajat')
 
 app.use('/tentti', tenttiRouter)
