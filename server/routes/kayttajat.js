@@ -4,6 +4,7 @@ const { Pool } = require('pg')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const saltRounds = 10;
+const fs = require('fs')
 require('dotenv').config()
 
 const pool = new Pool({
@@ -14,11 +15,14 @@ const pool = new Pool({
     port: 5432,
 })
 
-let refreshTokens = []
+
 
 router.post('/token', async (req, res) => {
     const refreshToken = req.body.token
     if (refreshToken === null) return res.status(401).send('Tokenia ei tarjottu')
+    let refreshTokenData = await pool.query('SELECT token FROM refresh_token')
+    let refreshTokens = refreshTokenData.rows.map(token => token.token)
+    console.log('tokens', refreshTokens)
     if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
     jwt.verify(refreshToken, process.env.REFRESH_ACCESS_TOKEN_SECRET, (err, user) => {
         //if (err) return res.status(403).send(err)
@@ -57,7 +61,7 @@ router.post('/kirjaudu', async (req, res, next) => {
             { userId: existingUser.id, kayttajatunnus: existingUser.kayttajatunnus },
             process.env.REFRESH_ACCESS_TOKEN_SECRET
         )
-        refreshTokens.push(refreshToken)
+        await pool.query('INSERT INTO refresh_token (token) VALUES ($1)', [refreshToken])
     } catch (err) {
         const error = new Error("Error! Something went wrong.");
         return next(error);
@@ -146,7 +150,6 @@ const isAdmin = async (req, res, next) => {
 
 const verifyToken = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
-    console.log('req.body', req.body)
     //Authorization: 'Bearer TOKEN'
     if (!token) {
         res.status(200).json({ success: false, message: "Error!Token was not provided." });
@@ -156,6 +159,7 @@ const verifyToken = (req, res, next) => {
     try {
         decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     } catch (err) {
+        console.log(err)
         res.sendStatus(403)
     }
     req.decoded = decodedToken
@@ -177,8 +181,9 @@ router.delete('/poista', verifyToken, isAdmin, async (req, res) => {
 
 router.post('/poistu', verifyToken, async (req, res) => {
     try {
-        refreshTokens = refreshTokens.filter(token => token !== req.body.token)
-        await pool.query('UPDATE käyttäjä SET kirjauduttu = false WHERE kirjauduttu = true AND id = $1', [req.body.kayttajaId])
+        console.log('req.body', req.body)
+        await pool.query('DELETE FROM refresh_token WHERE token = ($1)', [req.headers.token])
+        await pool.query('UPDATE käyttäjä SET kirjauduttu = false WHERE kirjauduttu = true AND id = $1', [req.headers.kayttajaid])
         res.status(204).send('Kirjauduttu ulos onnistuneesti')
     } catch (err) {
         res.status(500).send('Ulos kirjautuminen epäonnistui')
@@ -213,17 +218,17 @@ router.get('/hae-suoritus', verifyToken, isAdmin, async (req, res) => {
 
 router.post('/aseta-valinta', verifyToken, async (req, res) => {
     try {
+        console.log('req', req.headers)
         await pool.query('BEGIN')
         if (!req.body.valinta) {
-            await pool.query('INSERT INTO user_answer (id, user_id, answer_id, question_id, exam_id) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM user_answer), 1), $1, $2, $3, $4)', [req.body.kayttajaId, req.body.vastausId, req.body.kysymysId, req.body.tenttiId])
+            await pool.query('INSERT INTO user_answer (id, user_id, answer_id, question_id, exam_id) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM user_answer), 1), $1, $2, $3, $4)', [req.headers.kayttajaid, req.headers.vastausid, req.headers.kysymysid, req.headers.tenttiid])
         } else {
-            await pool.query('DELETE FROM user_answer WHERE user_id = ($1) AND answer_id = ($2)', [req.body.kayttajaId, req.body.vastausId])
+            await pool.query('DELETE FROM user_answer WHERE user_id = ($1) AND answer_id = ($2)', [req.headers.kayttajaid, req.headers.vastausid])
         }
         await pool.query('COMMIT')
         res.status(200).send('Valinnan asetus onnistui')
     } catch (err) {
         console.log(err)
-        res.status(500).send('Valinnan asetus epäonnistui')
     }
 })
 
