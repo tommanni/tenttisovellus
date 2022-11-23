@@ -82,7 +82,22 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
     const asetaValinta = async (vastausId, index, valinta, kysymysId, tenttiId) => {
         const token = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
         try {
-            await axios.post('http://localhost:8080/kayttaja/aseta-valinta', { vastausId: vastausId, valinta: valinta, kayttajaId: tenttiDatat.kayttaja.id, kysymysId: kysymys.id, tenttiId: tenttiId }, { "headers": { 'Authorization': `Bearer ${token.token}`, 'content-type': 'application/json' } })
+            axios({
+                method: 'post',
+                url: 'http://localhost:8080/kayttaja/aseta-valinta',
+                headers: {
+                    'Authorization': `Bearer ${token.token}`,
+                    'content-type': 'application/json',
+                    vastausId: vastausId,
+                    valinta: valinta,
+                    kayttajaId: tenttiDatat.kayttaja.id,
+                    kysymysId: kysymys.id,
+                    tenttiId: tenttiId
+                },
+                data: {
+
+                }
+            });
             dispatch({
                 type: 'ASETA_VALINTA',
                 payload: {
@@ -97,12 +112,27 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
                 }
             })
         } catch (err) {
+            console.log(err)
             if (err.response.status === 403) {
                 let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
                 console.log(tokens)
                 let newToken = await axios.post('http://localhost:8080/kayttaja/token', { token: tokens.refreshToken })
                 localStorage.setItem(tenttiDatat.kayttaja.kayttajatunnus, JSON.stringify({ token: newToken.data.token, refreshToken: tokens.refreshToken }))
-                await axios.post('http://localhost:8080/kayttaja/aseta-valinta', { " vastausId": vastausId, "valinta": valinta, "kayttajaId": tenttiDatat.kayttaja.id, "kysymysId": kysymys.id, "tenttiId": tenttiId }, { "headers": { 'Authorization': `Bearer ${newToken.data.token}`, 'content-type': 'application/json' } })
+                axios({
+                    method: 'post',
+                    url: 'http://localhost:8080/kayttaja/token',
+                    headers: {
+                        'Authorization': `Bearer ${newToken.data.token}`,
+                        'content-type': 'application/json'
+                    },
+                    data: {
+                        vastausId: vastausId,
+                        valinta: valinta,
+                        kayttajaId: tenttiDatat.kayttaja.id,
+                        kysymysId: kysymys.id,
+                        tenttiId: tenttiId
+                    }
+                });
             }
         }
     }
