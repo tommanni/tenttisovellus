@@ -17,11 +17,15 @@ const App = () => {
   useEffect(() => {
     try {
       const getData = async () => {
+        let result;
         const kayttaja = JSON.parse(localStorage.getItem('kayttaja'))
         if (kayttaja?.kirjauduttu) {
-          const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
+          result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
           dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
-        }
+        } /* else {
+          result = await axios.get('http://localhost:8080/tentti/offline-data', { params: { kayttaja: kayttaja } });
+          dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
+        } */
       }
       getData()
     } catch (error) {

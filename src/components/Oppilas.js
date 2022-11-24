@@ -37,14 +37,32 @@ const Oppilas = ({ oppilas, setOppilaat, setFilter }) => {
         let token = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
         const haeSuoritukset = async () => {
             try {
-                let suoritukset = await axios.get('http://localhost:8080/kayttaja/hae-suoritus', { "headers": { 'Authorization': `Bearer ${token.token}`, 'content-type': 'application/json' }, data: { kayttajaId: oppilas.id } })
+                let suoritukset = await axios.get('http://localhost:8080/kayttaja/hae-suoritus', {
+                    "headers": {
+                        'Authorization': `Bearer ${token.token}`,
+                        'content-type': 'application/json',
+                        kayttajaId: oppilas.id
+                    },
+                    data: {
+                        kayttajaId: oppilas.id
+                    }
+                })
                 setSuoritukset(suoritukset.data)
             } catch (err) {
                 if (err.response.status === 403) {
                     let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
                     let newToken = await axios.post('http://localhost:8080/kayttaja/token', { token: tokens.refreshToken })
                     localStorage.setItem(tenttiDatat.kayttaja.kayttajatunnus, JSON.stringify({ token: newToken.data.token, refreshToken: tokens.refreshToken }))
-                    let suoritukset = await axios.get('http://localhost:8080/kayttaja/hae-suoritus', { "headers": { 'Authorization': `Bearer ${newToken.token}`, 'content-type': 'application/json' }, data: { kayttajaId: oppilas.id } })
+                    let suoritukset = await axios.get('http://localhost:8080/kayttaja/hae-suoritus', {
+                        "headers": {
+                            'Authorization': `Bearer ${newToken.token}`,
+                            'content-type': 'application/json',
+                            kayttajaId: oppilas.id
+                        },
+                        data: {
+                            kayttajaId: oppilas.id
+                        }
+                    })
                     setSuoritukset(suoritukset.data)
                     console.log(suoritukset.data)
                 }

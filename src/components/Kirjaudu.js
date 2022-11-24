@@ -38,12 +38,46 @@ const Kirjaudu = () => {
             localStorage.setItem('kayttaja', JSON.stringify(kayttaja))
             let data = await axios.post('http://localhost:8080/kayttaja/kirjaudu', { kayttaja: kayttaja })
             localStorage.setItem(tunnus, JSON.stringify({ token: data.data.data.token, refreshToken: data.data.data.refreshToken }))
-            const result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
-            dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
-            dispatch({
-                type: 'KIRJAUDU',
-                payload: { kayttaja: kayttaja, kayttajatunnus: tunnus, salasana: salasana, admin: -1, setValue: setValue }
-            })
+            let result;
+            try {
+                result = await axios.get('http://localhost:8080/tentti', {
+                    headers: {
+                        'Authorization': `Bearer ${token?.token}`,
+                        'content-type': 'application/json',
+                        kayttaja: kayttaja
+                    }
+                }, { params: { kayttaja: kayttaja } });
+                dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
+                dispatch({
+                    type: 'KIRJAUDU',
+                    payload: { kayttaja: kayttaja, kayttajatunnus: tunnus, salasana: salasana, admin: -1, setValue: setValue }
+                })
+            } catch (err) {
+                if (err.response?.status === 403) {
+                    let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
+                    let newToken = await axios.post('http://localhost:8080/kayttaja/token',
+                        { token: tokens.refreshToken }
+                    )
+                    localStorage.setItem(
+                        tenttiDatat.kayttaja.kayttajatunnus,
+                        { token: newToken.data.token, refreshToken: tokens.refreshToken }
+                    )
+                    result = await axios.get('http://localhost:8080/tentti', {
+                        headers: {
+                            'Authorization': `Bearer ${newToken.data.token}`,
+                            'content-type': 'application/json',
+                            kayttaja: kayttaja
+                        }
+                    }, { params: { kayttaja: kayttaja } });
+                    dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
+                    dispatch({
+                        type: 'KIRJAUDU',
+                        payload: { kayttaja: kayttaja, kayttajatunnus: tunnus, salasana: salasana, admin: -1, setValue: setValue }
+                    })
+                } else {
+                    console.log('error:', err)
+                }
+            }
         }
     }
 
