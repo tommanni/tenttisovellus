@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { Pool } = require('pg')
+const { verifyToken } = require('../middlewares/verifyToken')
 
 const pool = new Pool({
     user: 'postgres',
@@ -11,7 +12,35 @@ const pool = new Pool({
 })
 
 //hae kaikki data
-router.get('/', async (req, res) => {
+router.get('/', /* verifyToken, */ async (req, res) => {
+    // tiedon luku asynkronisesti
+    try {
+        let tenttiData;
+        console.log(req.query)
+        if (Object.keys(req.query).length > 0) {
+            tenttiData = await pool.query("SELECT * FROM exam WHERE NOT id IN (SELECT exam_id FROM finished_exam WHERE user_id = ($1)) ORDER BY id", [req.query.kayttaja.id])
+        } else {
+            tenttiData = await pool.query("SELECT * FROM exam ORDER BY id")
+        }
+        let tentit = tenttiData.rows
+        for (let i = 0; i < tentit.length; i++) {
+            let kysymykset = await pool.query("SELECT id, kysymys FROM question WHERE fk_exam_id = ($1) ORDER BY id", [Number(tentit[i].id)])
+            tentit[i].kysymykset = kysymykset.rows
+            for (let j = 0; j < tentit[i].kysymykset.length; j++) {
+                let vastaukset = await pool.query("SELECT id, vastaus, oikein FROM answer WHERE question_id = ($1) ORDER BY id", [Number(tentit[i].kysymykset[j].id)])
+                tentit[i].kysymykset[j].vastaukset = vastaukset.rows
+                //console.log('dsfs', tentit[i].kysymykset[j].vastaukset)
+            }
+        }
+        const kayttajat = await pool.query("SELECT id, kayttajatunnus, salasana, admin, kirjauduttu FROM käyttäjä")
+        const kayttajaVastaukset = await pool.query('SELECT id, user_id, answer_id, question_id, exam_id FROM user_answer ORDER BY id')
+        res.status(200).send({ tentit: tentit, kayttajaVastaukset: kayttajaVastaukset.rows, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat.rows, naytaVastaukset: false, rekisteröidytään: false })
+    } catch (error) {
+        res.status(500).send('Datan hakeminen epäonnistui')
+    }
+})
+
+router.get('/offline-data'/* , verifyToken */, async (req, res) => {
     // tiedon luku asynkronisesti
     try {
         let tenttiData;

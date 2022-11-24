@@ -1,21 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const { Pool } = require('pg')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const saltRounds = 10;
-const fs = require('fs')
 require('dotenv').config()
-
-const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'examDB',
-    password: 'admin',
-    port: 5432,
-})
-
-
+const { isAdmin } = require('../middlewares/isAdmin')
+const { verifyToken } = require('../middlewares/verifyToken')
+const { pool } = require('../pool')
 
 router.post('/token', async (req, res) => {
     const refreshToken = req.body.token
@@ -130,42 +121,6 @@ router.get('/hae', async (req, res) => {
 
 })
 
-const isAdmin = async (req, res, next) => {
-    try {
-        let result = await pool.query("SELECT * FROM käyttäjä WHERE id = $1 ", [req.decoded?.userId])
-        let admin = result.rows[0].admin
-        if (admin !== 1) {
-            res.status(401).send("no access!")
-            next()
-        } else {
-            next()
-        }
-        //res.send('Tais datan tallennus onnistua')    
-    }
-    catch (e) {
-        res.status(500).send(e)
-    }
-
-}
-
-const verifyToken = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    //Authorization: 'Bearer TOKEN'
-    if (!token) {
-        res.status(200).json({ success: false, message: "Error!Token was not provided." });
-    }
-    //Decoding the token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    } catch (err) {
-        console.log(err)
-        res.sendStatus(403)
-    }
-    req.decoded = decodedToken
-    next()
-}
-
 router.delete('/poista', verifyToken, isAdmin, async (req, res) => {
     try {
         await pool.query('BEGIN')
@@ -207,9 +162,9 @@ router.get('/hae-tulos', async (req, res) => {
 router.get('/hae-suoritus', verifyToken, isAdmin, async (req, res) => {
     try {
         console.log('sadfasdfdas')
-        const suoritetut = await pool.query('SELECT (SELECT nimi FROM exam WHERE id = F.exam_id), grade FROM finished_exam F WHERE user_id = ($1)', [req.query.kayttajaId])
+        const suoritetut = await pool.query('SELECT (SELECT nimi FROM exam WHERE id = F.exam_id), grade FROM finished_exam F WHERE user_id = ($1)', [req.headers.kayttajaid])
         console.log(suoritetut.rows)
-        const suorittamattomat = await pool.query('SELECT nimi FROM exam WHERE NOT id in (SELECT exam_id FROM finished_exam WHERE user_id = ($1))', [req.query.kayttajaId])
+        const suorittamattomat = await pool.query('SELECT nimi FROM exam WHERE NOT id in (SELECT exam_id FROM finished_exam WHERE user_id = ($1))', [req.headers.kayttajaid])
         res.status(200).send({ suoritetut: suoritetut.rows, suorittamattomat: suorittamattomat.rows })
     } catch (err) {
         console.log(err)
