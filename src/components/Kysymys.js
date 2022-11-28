@@ -2,12 +2,15 @@ import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import { useContext } from 'react';
+import React, { useContext, useCallback, useState } from 'react';
 import { TenttiContext } from '../App';
 import axios from 'axios';
+import ShowImage from './ShowImage';
+import DropBox from './DropBox';
 
 const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
     const { tenttiDatat, dispatch, tentit, kayttaja, vastaukset, kayttajaVastaukset } = useContext(TenttiContext)
+    const [images, setImages] = useState([]);
 
     async function poistaKysymys() {
         try {
@@ -137,6 +140,20 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
         }
     }
 
+    const onDrop = useCallback(async (acceptedFiles) => {
+        acceptedFiles.map((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                setImages((prevState) => [
+                    ...prevState,
+                    { id: index, src: e.target.result },
+                ]);
+            };
+            reader.readAsDataURL(file);
+            return file;
+        });
+    }, []);
+
     return (
         <div className='kysymys'>
             <p className='kysymysTeksti'><b>{kysymysNimi}</b>{kayttaja === 1 && <input type="text" placeholder=' vaihda kysymys' onChange={(event) => {
@@ -159,10 +176,10 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
                     console.log(err)
                 }
             }} />}
-                {kayttaja === 1 && <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} className='poista-kysymys' onClick={() => poistaKysymys()} >
-
-                </Button>}
+                {kayttaja === 1 && <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} className='poista-kysymys' onClick={() => poistaKysymys()} ></Button>}
             </p>
+            {kayttaja === 1 && <DropBox onDrop={onDrop} />}
+            {kayttaja === 1 && <ShowImage images={images} />}
             {
                 kysymys.vastaukset.map((vastaus, index) => {
 
