@@ -1,6 +1,20 @@
 const express = require('express')
 const router = express.Router()
 const { Pool } = require('pg')
+const multer = require('multer')
+const path = require('path')
+const fs = require('fs')
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, './images')
+    },
+    filename: (req, file, cb) => {
+        console.log('filename:', file)
+        cb(null, req.headers.kysymysid)
+    }
+})
+const upload = multer({ storage: storage })
 
 const pool = new Pool({
     user: 'postgres',
@@ -17,6 +31,54 @@ router.post('/lisaa', async (req, res) => {
         res.status(200).send('Kysymyksen lisäys onnistui')
     } catch (err) {
         res.status(500).send('Kysymyksen lisäys epäonnistui')
+    }
+})
+
+router.post('/lisaa-kuva', upload.single('image'), async (req, res) => {
+    console.log(req)
+    res.send('image uplaoded')
+})
+
+router.delete('/poista-kuva', async (req, res) => {
+    try {
+        console.log('hello')
+        fs.readdir('./images', function (err, fileNames) {
+            if (fileNames?.includes(req.body.kysymysId)) {
+                fs.unlink(`./images/${req.body.kysymysId}`, (err => {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                        console.log('Deleted file');
+                    }
+                }))
+            }
+        })
+    } catch (err) {
+        console.log(err)
+        res.status(404)
+    }
+})
+
+router.get('/hae-kuva', async (req, res) => {
+    try {
+        fs.readdir('./images', function (err, fileNames) {
+            if (err) { /* handle error */ }
+            if (fileNames?.includes(req.query.kysymysid)) {
+                fs.readFile(`./images/${req.query.kysymysid}`, (err, data) => {
+                    if (err) {
+                        console.log(err)
+                    }
+                    console.log('data:', data)
+                    const b64 = Buffer.from(data).toString('base64');
+                    // CHANGE THIS IF THE IMAGE YOU ARE WORKING WITH IS .jpg OR WHATEVER
+                    const mimeType = 'image/png'; // e.g., image/png
+
+                    res.send(`"data:${mimeType};base64,${b64}"`);
+                })
+            }
+        });
+    } catch (err) {
+        res.status(404)
     }
 })
 

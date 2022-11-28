@@ -56,11 +56,12 @@ router.get('/laske-oikein', async (req, res) => {
 router.delete('/poista', async (req, res) => {
     try {
         await pool.query('BEGIN')
-        await pool.query('DELETE FROM user_answer where answer_id = (SELECT id FROM answer WHERE vastaus = ($1) AND user_id = ($2))', [req.body.vastaus, req.body.userId])
+        await pool.query('DELETE FROM user_answer where answer_id = (SELECT id FROM answer WHERE vastaus = ($1))', [req.body.vastaus])
         await pool.query('DELETE FROM answer WHERE question_id = ($1) AND vastaus = ($2)', [req.body.kysymysId, req.body.vastaus])
         await pool.query('COMMIT')
         res.status(200).send('Vastauksen poisto onnistui')
     } catch (err) {
+        console.log(err)
         res.status(500).send('Vastauksen poisto epäonnistui')
     }
 })
