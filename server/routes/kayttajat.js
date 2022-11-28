@@ -141,7 +141,7 @@ router.post('/poistu', verifyToken, async (req, res) => {
         await pool.query('UPDATE käyttäjä SET kirjauduttu = false WHERE kirjauduttu = true AND id = $1', [req.headers.kayttajaid])
         res.status(204).send('Kirjauduttu ulos onnistuneesti')
     } catch (err) {
-        res.status(500).send('Ulos kirjautuminen epäonnistui')
+        console.log('Ulos kirjautuminen epäonnistui')
     }
 })
 
