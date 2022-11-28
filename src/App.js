@@ -2,6 +2,7 @@ import './App.css';
 import Header from './components/Header'
 import Tentit from './components/Tentit'
 import Kirjaudu from './components/Kirjaudu';
+import Rekisteröidy from './components/Rekisteröidy';
 import Oppilastiedot from './components/Oppilastiedot';
 import { useState, useReducer, useEffect, createContext } from 'react'
 import axios from 'axios'
@@ -64,7 +65,8 @@ const App = () => {
         {tenttiDatat.naytaOppilaat && tenttiDatat.kirjauduttu && <Oppilastiedot />}
         {tenttiDatat.tietoAlustettu && tenttiDatat.kirjauduttu && !tenttiDatat.naytaOppilaat && <Tentit />}
         <div className='kirjaudu'>
-          {!tenttiDatat.kirjauduttu && <Kirjaudu />}
+          {!tenttiDatat.kirjauduttu && !tenttiDatat.rekisteröidytään && <Kirjaudu />}
+          {!tenttiDatat.kirjauduttu && tenttiDatat.rekisteröidytään && <Rekisteröidy />}
         </div>
       </div>
     </TenttiContext.Provider >

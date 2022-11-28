@@ -24,6 +24,7 @@ const Header = () => {
             })
         } catch (err) {
             if (err.response.status === 403) {
+                console.log('403 error')
                 let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
                 let newToken = await axios.post('http://localhost:8080/kayttaja/token',
                     { token: tokens.refreshToken }
@@ -33,12 +34,12 @@ const Header = () => {
                     { token: newToken.data.token, refreshToken: tokens.refreshToken }
                 )
                 await axios.post('http://localhost:8080/kayttaja/poistu', {
-                    kayttajaId: tenttiDatat.kayttaja.id,
-                    token: token.refreshToken
                 }, {
                     headers: {
                         'Authorization': `Bearer ${newToken.data.token}`,
-                        'content-type': 'application/json'
+                        'content-type': 'application/json',
+                        kayttajaId: tenttiDatat.kayttaja.id,
+                        token: token.refreshToken
                     }
                 }
                 )

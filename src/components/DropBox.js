@@ -44,11 +44,11 @@ function DropBox({ onDrop }) {
         noClick: true,
         noKeyboard: true,
     });
-    const lists = acceptedFiles.map((list) => (
+    /* const lists = acceptedFiles.map((list) => (
         <li key={list.path}>
             {list.path} - {list.size} bytes
         </li>
-    ));
+    )); */
     return (
         <>
             {' '}

@@ -113,7 +113,7 @@ export function reducer(state, action) {
             return tentit13
 
         case 'REKISTEROIDYTAAN':
-            let tentit14 = { ...state, rekisteröidytään: true }
+            let tentit14 = { ...state, rekisteröidytään: !state.rekisteröidytään }
             return tentit14
 
         case 'POISTU':

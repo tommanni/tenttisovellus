@@ -8,41 +8,47 @@ const Kirjaudu = () => {
     const [tunnus, setTunnus] = useState("")
     const [salasana, setSalasana] = useState("")
 
-    async function lisaaKayttaja(e) {
+    async function kirjaudu(e) {
         e.preventDefault()
-        const isFound = tenttiDatat?.kayttajat?.some(kayttaja => {
-            if (kayttaja.kayttajatunnus === tunnus) {
-                return true
-            }
-            return false
-        })
-        if (!isFound && tenttiDatat.rekisteröidytään) {
-            await axios.post('http://localhost:8080/kayttaja/lisaa', { kayttajatunnus: tunnus, salasana: salasana })
-            dispatch({
-                type: 'LISAA_KAYTTAJA',
-                payload: { kayttajatunnus: tunnus, salasana: salasana, admin: -1 }
-            })
-        } else if (isFound && tenttiDatat.rekisteröidytään) {
-            alert('Käyttäjätunnus on varattu')
+        let token = localStorage.getItem(tunnus)
+        let kayttaja = await axios.get('http://localhost:8080/kayttaja/hae', { params: { kayttajatunnus: tunnus, salasana: salasana } })
+        kayttaja = kayttaja.data.kayttaja
+        if (kayttaja === undefined) {
+            alert('Käyttäjätunnus tai salasana on väärin')
+            return
         }
-        else {
-            let token = localStorage.getItem(tunnus)
-            let kayttaja = await axios.get('http://localhost:8080/kayttaja/hae', { params: { kayttajatunnus: tunnus, salasana: salasana } })
-            kayttaja = kayttaja.data.kayttaja
-            if (kayttaja === undefined) {
-                alert('Käyttäjätunnus tai salasana on väärin')
-                return
-            }
-            kayttaja.kirjauduttu = true
-            kayttaja.salasana = salasana
-            localStorage.setItem('kayttaja', JSON.stringify(kayttaja))
-            let data = await axios.post('http://localhost:8080/kayttaja/kirjaudu', { kayttaja: kayttaja })
-            localStorage.setItem(tunnus, JSON.stringify({ token: data.data.data.token, refreshToken: data.data.data.refreshToken }))
-            let result;
-            try {
+        kayttaja.kirjauduttu = true
+        kayttaja.salasana = salasana
+        localStorage.setItem('kayttaja', JSON.stringify(kayttaja))
+        let data = await axios.post('http://localhost:8080/kayttaja/kirjaudu', { kayttaja: kayttaja })
+        localStorage.setItem(tunnus, JSON.stringify({ token: data.data.data.token, refreshToken: data.data.data.refreshToken }))
+        let result;
+        try {
+            result = await axios.get('http://localhost:8080/tentti', {
+                headers: {
+                    'Authorization': `Bearer ${token?.token}`,
+                    'content-type': 'application/json',
+                    kayttaja: kayttaja
+                }
+            }, { params: { kayttaja: kayttaja } });
+            dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
+            dispatch({
+                type: 'KIRJAUDU',
+                payload: { kayttaja: kayttaja, kayttajatunnus: tunnus, salasana: salasana, admin: -1, setValue: setValue }
+            })
+        } catch (err) {
+            if (err.response?.status === 403) {
+                let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
+                let newToken = await axios.post('http://localhost:8080/kayttaja/token',
+                    { token: tokens.refreshToken }
+                )
+                localStorage.setItem(
+                    tenttiDatat.kayttaja.kayttajatunnus,
+                    { token: newToken.data.token, refreshToken: tokens.refreshToken }
+                )
                 result = await axios.get('http://localhost:8080/tentti', {
                     headers: {
-                        'Authorization': `Bearer ${token?.token}`,
+                        'Authorization': `Bearer ${newToken.data.token}`,
                         'content-type': 'application/json',
                         kayttaja: kayttaja
                     }
@@ -52,31 +58,8 @@ const Kirjaudu = () => {
                     type: 'KIRJAUDU',
                     payload: { kayttaja: kayttaja, kayttajatunnus: tunnus, salasana: salasana, admin: -1, setValue: setValue }
                 })
-            } catch (err) {
-                if (err.response?.status === 403) {
-                    let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
-                    let newToken = await axios.post('http://localhost:8080/kayttaja/token',
-                        { token: tokens.refreshToken }
-                    )
-                    localStorage.setItem(
-                        tenttiDatat.kayttaja.kayttajatunnus,
-                        { token: newToken.data.token, refreshToken: tokens.refreshToken }
-                    )
-                    result = await axios.get('http://localhost:8080/tentti', {
-                        headers: {
-                            'Authorization': `Bearer ${newToken.data.token}`,
-                            'content-type': 'application/json',
-                            kayttaja: kayttaja
-                        }
-                    }, { params: { kayttaja: kayttaja } });
-                    dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
-                    dispatch({
-                        type: 'KIRJAUDU',
-                        payload: { kayttaja: kayttaja, kayttajatunnus: tunnus, salasana: salasana, admin: -1, setValue: setValue }
-                    })
-                } else {
-                    console.log('error:', err)
-                }
+            } else {
+                console.log('error:', err)
             }
         }
     }
@@ -90,15 +73,15 @@ const Kirjaudu = () => {
 
     return (
         <div>
-            <p className="otsikko">{tenttiDatat.rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</p>
+            <p className="otsikko">Kirjaudu</p>
             <form>
                 <label for='kayttajatunnus'>Käyttäjätunnus<br /></label>
                 <input value={tunnus} onChange={handleTunnusChange} type='text' id="kayttajatunnus" /><br />
                 <label for='salasana'>Salasana<br /></label>
                 <input value={salasana} onChange={handleSalasanaChange} type='password' id="Salasana" /><br />
-                <button onClick={(e) => { lisaaKayttaja(e) }}>{tenttiDatat.rekisteröidytään ? "Rekisteröidy" : "Kirjaudu"}</button>
+                <button onClick={(e) => { kirjaudu(e) }}>Kirjaudu</button>
             </form>
-            {!tenttiDatat.rekisteröidytään && <button onClick={() => dispatch({ type: 'REKISTEROIDYTAAN' })}>Rekisteröidy</button>}
+            <button onClick={() => dispatch({ type: 'REKISTEROIDYTAAN' })}>Rekisteröidy</button>
         </div >
     )
 }
