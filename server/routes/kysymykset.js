@@ -53,34 +53,36 @@ router.delete('/poista-kuva', async (req, res) => {
                 }))
             }
         })
+        res.status(200).send('Kuvan poisto onnistui')
     } catch (err) {
         console.log(err)
         res.status(404)
     }
 })
 
-router.get('/hae-kuva', async (req, res) => {
+/* router.get('/hae-kuva', async (req, res) => {
     try {
-        fs.readdir('./images', function (err, fileNames) {
-            if (err) { /* handle error */ }
-            if (fileNames?.includes(req.query.kysymysid)) {
-                fs.readFile(`./images/${req.query.kysymysid}`, (err, data) => {
-                    if (err) {
-                        console.log(err)
-                    }
-                    console.log('data:', data)
-                    const b64 = Buffer.from(data).toString('base64');
-                    // CHANGE THIS IF THE IMAGE YOU ARE WORKING WITH IS .jpg OR WHATEVER
-                    const mimeType = 'image/png'; // e.g., image/png
-
-                    res.send(`"data:${mimeType};base64,${b64}"`);
-                })
+        let idData = await pool.query('SELECT id FROM question WHERE fk_exam_id = $1', [req.query.tenttiId])
+        idData = idData.rows.map(id => id.id)
+        let images = []
+        let files = fs.readdirSync('./images')
+        files.forEach(file => {
+            if (idData.includes(file)) {
+                let data = fs.readFileSync(`./images/${file}`)
+                const b64 = Buffer.from(data).toString('base64');
+                // CHANGE THIS IF THE IMAGE YOU ARE WORKING WITH IS .jpg OR WHATEVER
+                const mimeType = 'image/png'; // e.g., image/png
+                let obj = {}
+                obj[file] = `"data:${mimeType};base64,${b64}"`
+                images.push(obj)
+                //console.log(obj)
             }
         });
+        res.send(images)
     } catch (err) {
         res.status(404)
     }
-})
+}) */
 
 //muuta kysymystä
 router.put('/nimi-muuttui', async (req, res) => {

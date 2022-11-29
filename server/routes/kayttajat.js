@@ -9,6 +9,7 @@ const { verifyToken } = require('../middlewares/verifyToken')
 const { pool } = require('../pool')
 
 router.post('/token', async (req, res) => {
+    console.log('tokenia haetaan')
     const refreshToken = req.body.token
     if (refreshToken === null) return res.status(401).send('Tokenia ei tarjottu')
     let refreshTokenData = await pool.query('SELECT token FROM refresh_token')
@@ -135,8 +136,8 @@ router.delete('/poista', verifyToken, isAdmin, async (req, res) => {
 })
 
 router.post('/poistu', verifyToken, async (req, res) => {
+    console.log('positutana')
     try {
-        console.log('req.body', req.body)
         await pool.query('DELETE FROM refresh_token WHERE token = ($1)', [req.headers.token])
         await pool.query('UPDATE käyttäjä SET kirjauduttu = false WHERE kirjauduttu = true AND id = $1', [req.headers.kayttajaid])
         res.status(204).send('Kirjauduttu ulos onnistuneesti')

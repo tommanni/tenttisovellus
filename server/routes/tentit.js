@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const { Pool } = require('pg')
 const { verifyToken } = require('../middlewares/verifyToken')
+const fs = require('fs')
 
 const pool = new Pool({
     user: 'postgres',
@@ -34,8 +35,29 @@ router.get('/', /* verifyToken, */ async (req, res) => {
         }
         const kayttajat = await pool.query("SELECT id, kayttajatunnus, salasana, admin, kirjauduttu FROM käyttäjä")
         const kayttajaVastaukset = await pool.query('SELECT id, user_id, answer_id, question_id, exam_id FROM user_answer ORDER BY id')
-        res.status(200).send({ tentit: tentit, kayttajaVastaukset: kayttajaVastaukset.rows, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat.rows, naytaVastaukset: false, rekisteröidytään: false })
+        let idData = await pool.query('SELECT id FROM question WHERE fk_exam_id = $1', [req.query.tenttiId])
+        idData = idData.rows.map(id => id.id)
+        console.log(req.query.tenttiId)
+        let kuvat = []
+        let files = fs.readdirSync('./images')
+        files.forEach(file => {
+            if (idData.includes(file)) {
+                console.log('helo')
+                let data = fs.readFileSync(`./images/${file}`)
+                const b64 = Buffer.from(data).toString('base64')
+                console.log(b64.length)
+                //console.log(data.length)
+                // CHANGE THIS IF THE IMAGE YOU ARE WORKING WITH IS .jpg OR WHATEVER
+                const mimeType = 'image/png'; // e.g., image/png
+                let obj = {}
+                obj[file] = `data:${mimeType};base64,${b64}`
+                kuvat.push(obj)
+                //console.log(obj)
+            }
+        });
+        res.status(200).send({ kuvat: kuvat, tentit: tentit, kayttajaVastaukset: kayttajaVastaukset.rows, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat.rows, naytaVastaukset: false, rekisteröidytään: false })
     } catch (error) {
+        console.log(error)
         res.status(500).send('Datan hakeminen epäonnistui')
     }
 })
