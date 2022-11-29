@@ -120,7 +120,7 @@ export function reducer(state, action) {
             let tentit15 = { ...state, kirjauduttu: false, tallennetaanko: true, naytaOppilaat: false }
             let kayttajaData1 = action.payload
             kayttajaData1.kirjauduttu = false
-            localStorage.setItem('kayttaja', JSON.stringify(kayttajaData1))
+            localStorage.clear()
             return tentit15
 
         case 'NAYTAOPPILAAT':
@@ -131,10 +131,16 @@ export function reducer(state, action) {
             let tentit17 = { ...state, naytaOppilaat: false }
             return tentit17
 
+        case 'POISTA_KUVA':
+            let tentit20 = { ...state }
+            tentit20.kuvat = tentit20.kuvat.filter(kuva => !Object.keys(kuva).includes(action.payload))
+            return tentit20
+
         case 'ALUSTA_DATA':
             const tenttiId = JSON.parse(localStorage.getItem('tenttiId'))
             if (tenttiId !== null) {
-                action.payload.setValue([action.payload.data.tentit?.find(tentti => Number(tentti.id) === tenttiId)])
+                let tentti = action.payload.data.tentit?.find(tentti => Number(tentti.id) === tenttiId)
+                action.payload.setValue([tentti])
             } else {
                 action.payload.setValue([action.payload.data.tentit[0].id])
             }

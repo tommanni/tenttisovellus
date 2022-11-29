@@ -9,19 +9,22 @@ import DropBox from './DropBox';
 import Vastaus from './Vastaus';
 
 const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
-    const { tenttiDatat, dispatch, tentit, kayttaja } = useContext(TenttiContext)
+    const { tenttiDatat, dispatch, tentit, kayttaja, value } = useContext(TenttiContext)
     const [images, setImages] = useState([]);
-    const [imageSrc, setImageSrc] = useState([])
 
-    useEffect(() => {
-        const i = async () => {
-            let image = await axios.get("http://localhost:8080/kysymys/hae-kuva", { params: { kysymysid: kysymys.id } });
-            image = image.data
-            setImageSrc(image)
-        }
-        i()
-    }, [])
-
+    /*    useEffect(() => {
+           const i = async () => {
+               let imageData = await axios.get("http://localhost:8080/kysymys/hae-kuva", { params: { tenttiId: value[0].id } });
+               imageData = imageData.data
+               console.log(imageData)
+               dispatch({
+                   type: 'LATAA_KUVAT',
+                   payload: imageData
+               })
+           }
+           i()
+       }, [value])
+    */
     async function poistaKysymys() {
         try {
             await axios.delete('http://localhost:8080/kysymys/poista', { data: { tenttiId: tenttiId, kysymys: kysymys.kysymys, userId: tenttiDatat.kayttaja.id } })
@@ -41,6 +44,10 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
 
     const poistaKuva = async () => {
         await axios.delete('http://localhost:8080/kysymys/poista-kuva', { data: { kysymysId: kysymys.id } })
+        dispatch({
+            type: 'POISTA_KUVA',
+            payload: kysymys.id
+        })
     }
 
     const lisaaVastaus = async () => {
@@ -106,16 +113,15 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
             {kayttaja === 1 && <DropBox onDrop={onDrop} />}
             <div className='container'>
                 <ShowImage images={images} />
-                <img src={imageSrc} className='img' />
+                {tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 && <img src={tenttiDatat?.kuvat?.find(img => Object.keys(img).includes(kysymys.id))[kysymys.id]} className='img' alt='kuva' />}
             </div>
-            {kayttaja === 1 && (imageSrc.length > 0 || images.length > 0) && <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => poistaKuva()} />}
+            {kayttaja === 1 && (tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 || images.length > 0) && <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => poistaKuva()} />}
             {
                 kysymys.vastaukset.map((vastaus, index) => <Vastaus kysymysIndex={kysymysIndex} tenttiId={tenttiId} kysymys={kysymys} vastaus={vastaus} index={index} />)
             }
             {
                 kayttaja === 1 && <Button style={{ color: '#fff' }} startIcon={<AddCircleIcon />} className='lisaa-vastaus' onClick={() => lisaaVastaus()}>LISÄÄ VASTAUS</Button>
             }
-
         </div >
 
     )

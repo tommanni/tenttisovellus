@@ -9,8 +9,8 @@ const Header = () => {
     const handlePoistuClick = async () => {
         const token = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
         try {
-            await axios.post('http://localhost:8080/kayttaja/poistu', {
-            }, {
+            console.log(token.refreshToken)
+            const res = await axios.post('http://localhost:8080/kayttaja/poistu', {}, {
                 headers: {
                     'Authorization': `Bearer ${token.token}`,
                     'content-type': 'application/json',
@@ -18,11 +18,13 @@ const Header = () => {
                     token: token.refreshToken
                 }
             })
+            console.log(res)
             dispatch({
                 type: 'POISTU',
                 payload: tenttiDatat.kayttaja
             })
         } catch (err) {
+            console.log('positutana')
             if (err.response.status === 403) {
                 console.log('403 error')
                 let tokens = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))

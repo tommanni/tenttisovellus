@@ -21,7 +21,8 @@ const App = () => {
         let result;
         const kayttaja = JSON.parse(localStorage.getItem('kayttaja'))
         if (kayttaja?.kirjauduttu) {
-          result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja } });
+          const tenttiId = localStorage.getItem('tenttiId')
+          result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja, tenttiId: tenttiId } });
           dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
         } /* else {
           result = await axios.get('http://localhost:8080/tentti/offline-data', { params: { kayttaja: kayttaja } });

@@ -91,7 +91,7 @@ const Tentit = () => {
             }
             {kayttaja === 1 && <Button startIcon={<AddCircleIcon />} style={{ color: '#fff' }} onClick={() => lisaaTentti()}>LISÄÄ TENTTI</Button>}
             {Object.values(value).length !== 0 ?
-                value.map(tentti => <Tentti
+                value?.map(tentti => <Tentti
                     key={tentti.id + 1000}
                     tentti={tentti}
                     tenttiId={tentti.id}

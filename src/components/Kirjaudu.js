@@ -29,8 +29,9 @@ const Kirjaudu = () => {
                     'Authorization': `Bearer ${token?.token}`,
                     'content-type': 'application/json',
                     kayttaja: kayttaja
-                }
-            }, { params: { kayttaja: kayttaja } });
+                },
+                params: { kayttaja: kayttaja, tenttiId: tenttiDatat.tentit[0].id }
+            });
             dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue, kayttaja: kayttaja } })
             dispatch({
                 type: 'KIRJAUDU',
