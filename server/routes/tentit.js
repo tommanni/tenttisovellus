@@ -35,25 +35,21 @@ router.get('/', /* verifyToken, */ async (req, res) => {
         }
         const kayttajat = await pool.query("SELECT id, kayttajatunnus, salasana, admin, kirjauduttu FROM käyttäjä")
         const kayttajaVastaukset = await pool.query('SELECT id, user_id, answer_id, question_id, exam_id FROM user_answer ORDER BY id')
-        let idData = await pool.query('SELECT id FROM question WHERE fk_exam_id = $1', [req.query.tenttiId])
-        idData = idData.rows.map(id => id.id)
+        //let idData = await pool.query('SELECT id FROM question WHERE fk_exam_id = $1', [req.query.tenttiId])
+        //idData = idData.rows.map(id => id.id)
         console.log(req.query.tenttiId)
         let kuvat = []
         let files = fs.readdirSync('./images')
         files.forEach(file => {
-            if (idData.includes(file)) {
-                console.log('helo')
-                let data = fs.readFileSync(`./images/${file}`)
-                const b64 = Buffer.from(data).toString('base64')
-                console.log(b64.length)
-                //console.log(data.length)
-                // CHANGE THIS IF THE IMAGE YOU ARE WORKING WITH IS .jpg OR WHATEVER
-                const mimeType = 'image/png'; // e.g., image/png
-                let obj = {}
-                obj[file] = `data:${mimeType};base64,${b64}`
-                kuvat.push(obj)
-                //console.log(obj)
-            }
+            console.log('helo')
+            let data = fs.readFileSync(`./images/${file}`)
+            const b64 = Buffer.from(data).toString('base64')
+            console.log(b64.length)
+            // CHANGE THIS IF THE IMAGE YOU ARE WORKING WITH IS .jpg OR WHATEVER
+            const mimeType = 'image/png'; // e.g., image/png
+            let obj = {}
+            obj[file] = `data:${mimeType};base64,${b64}`
+            kuvat.push(obj)
         });
         res.status(200).send({ kuvat: kuvat, tentit: tentit, kayttajaVastaukset: kayttajaVastaukset.rows, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat.rows, naytaVastaukset: false, rekisteröidytään: false })
     } catch (error) {
@@ -62,17 +58,12 @@ router.get('/', /* verifyToken, */ async (req, res) => {
     }
 })
 
-router.get('/offline-data'/* , verifyToken */, async (req, res) => {
+router.get('/offline-data', /* verifyToken, */ async (req, res) => {
     // tiedon luku asynkronisesti
     try {
-        let tenttiData;
-        console.log(req.query)
-        if (Object.keys(req.query).length > 0) {
-            tenttiData = await pool.query("SELECT * FROM exam WHERE NOT id IN (SELECT exam_id FROM finished_exam WHERE user_id = ($1)) ORDER BY id", [req.query.kayttaja.id])
-        } else {
-            tenttiData = await pool.query("SELECT * FROM exam ORDER BY id")
-        }
+        tenttiData = await pool.query("SELECT * FROM exam ORDER BY id")
         let tentit = tenttiData.rows
+
         for (let i = 0; i < tentit.length; i++) {
             let kysymykset = await pool.query("SELECT id, kysymys FROM question WHERE fk_exam_id = ($1) ORDER BY id", [Number(tentit[i].id)])
             tentit[i].kysymykset = kysymykset.rows
@@ -82,10 +73,9 @@ router.get('/offline-data'/* , verifyToken */, async (req, res) => {
                 //console.log('dsfs', tentit[i].kysymykset[j].vastaukset)
             }
         }
-        const kayttajat = await pool.query("SELECT id, kayttajatunnus, salasana, admin, kirjauduttu FROM käyttäjä")
-        const kayttajaVastaukset = await pool.query('SELECT id, user_id, answer_id, question_id, exam_id FROM user_answer ORDER BY id')
-        res.status(200).send({ tentit: tentit, kayttajaVastaukset: kayttajaVastaukset.rows, tallennetaanko: false, tietoAlustettu: false, kayttajat: kayttajat.rows, naytaVastaukset: false, rekisteröidytään: false })
+        res.status(200).send({ tentit: tentit })
     } catch (error) {
+        console.log(error)
         res.status(500).send('Datan hakeminen epäonnistui')
     }
 })
