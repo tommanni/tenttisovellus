@@ -109,14 +109,18 @@ router.post('/lisaa', async (req, res, next) => {
 
 router.get('/hae', async (req, res) => {
     try {
-        const kayttaja = await pool.query('SELECT * FROM käyttäjä WHERE kayttajatunnus = ($1)', [req.query.kayttajatunnus])
+        const kayttaja = await pool.query('SELECT * FROM käyttäjä WHERE kayttajatunnus = $1', [req.query.kayttajatunnus])
+        if (kayttaja.rows.length === 0) {
+            return res.send({ kayttaja: undefined })
+        }
         let passwordMatch = await bcrypt.compare(req.query.salasana, kayttaja.rows[0].salasana)
         if (!passwordMatch) {
             return res.send('fail')
         }
-        console.log(kayttaja.rows)
+        //console.log(kayttaja.rows)
         res.status(200).send({ kayttaja: kayttaja.rows[0] })
     } catch (err) {
+        console.log(err)
         res.status(500).send('Käyttäjän haku epäonnistui')
     }
 
