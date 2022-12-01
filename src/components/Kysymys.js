@@ -106,8 +106,8 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
             </p>
             {kayttaja === 1 && <DropBox onDrop={onDrop} />}
             <div className='container'>
-                {images.length > 0 && <ShowImage images={images} />}
-                {images.length > 0 ? images[0].id !== kysymys.id && tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 && <img src={tenttiDatat?.kuvat?.find(img => Object.keys(img).includes(kysymys.id))[kysymys.id]} className='img' alt='kuva' /> : tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 && <img src={tenttiDatat?.kuvat?.find(img => Object.keys(img).includes(kysymys.id))[kysymys.id]} className='img' alt='kuva' />}
+                {images.length > 0 && <ShowImage images={images} key={kysymys.id} />}
+                {images.length > 0 ? images[0].id !== kysymys.id && tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 && <img key={kysymys.id} src={tenttiDatat?.kuvat?.find(img => Object.keys(img).includes(kysymys.id))[kysymys.id]} className='img' alt='kuva' /> : tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 && <img key={kysymys.id} src={tenttiDatat?.kuvat?.find(img => Object.keys(img).includes(kysymys.id))[kysymys.id]} className='img' alt='kuva' />}
             </div>
             {kayttaja === 1 && (tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 || images.length > 0) && <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => poistaKuva()} />}
             {

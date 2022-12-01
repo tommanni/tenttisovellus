@@ -57,7 +57,7 @@ function DropBox({ onDrop }) {
                     className="dropbox"
                     {...getRootProps({ isDragAccept, isFocused, isDragReject })}
                 >
-                    <form method="post" enctype="multipart/form-data">
+                    <form method="post" encType="multipart/form-data">
                         <input name='question_image' type="file" {...getInputProps()} />
                     </form >
                     <p>Vedä ja pudota kuvia tähän</p>

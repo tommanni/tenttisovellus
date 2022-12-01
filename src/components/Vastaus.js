@@ -104,7 +104,7 @@ const Vastaus = ({ kysymysIndex, tenttiId, kysymys, vastaus, index }) => {
     }
 
     return (
-        <div key={vastaus.id} className='vastaus'>
+        <div className='vastaus'>
             {kayttaja === -1 && vastaukset === 1 ? <Checkbox color="default" checked={!vastaus.valinta} disableRipple /> : kayttaja === -1 && <Checkbox defaultChecked={kayttajaVastaukset.some(kVastaus => kVastaus.answer_id === vastaus.id && kVastaus.user_id === tenttiDatat.kayttaja.id)} color="default" onClick={() => asetaValinta(vastaus.id, index, vastaus.valinta, kysymys.id, tenttiId)} />}
 
             {vastaukset === 1 && vastaus.oikein === true && kayttaja === -1 ? <Checkbox color="default" checked={true} disableRipple />
