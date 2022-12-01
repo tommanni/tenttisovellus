@@ -4,7 +4,7 @@ import { TenttiContext } from '../App';
 import axios from 'axios';
 
 const Header = () => {
-    const { kirjauduttu, dispatch, tenttiDatat, kayttaja } = useContext(TenttiContext)
+    const { kirjauduttu, dispatch, tenttiDatat, kayttaja, setValue } = useContext(TenttiContext)
 
     const handlePoistuClick = async () => {
         const token = JSON.parse(localStorage.getItem(tenttiDatat.kayttaja.kayttajatunnus))
@@ -23,6 +23,8 @@ const Header = () => {
                 type: 'POISTU',
                 payload: tenttiDatat.kayttaja
             })
+            let result = await axios.get('http://localhost:8080/tentti/offline-data', { params: { kayttaja: kayttaja } });
+            dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
         } catch (err) {
             console.log('positutana')
             if (err.response.status === 403) {

@@ -12,19 +12,6 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
     const { tenttiDatat, dispatch, tentit, kayttaja, value } = useContext(TenttiContext)
     const [images, setImages] = useState([]);
 
-    /*    useEffect(() => {
-           const i = async () => {
-               let imageData = await axios.get("http://localhost:8080/kysymys/hae-kuva", { params: { tenttiId: value[0].id } });
-               imageData = imageData.data
-               console.log(imageData)
-               dispatch({
-                   type: 'LATAA_KUVAT',
-                   payload: imageData
-               })
-           }
-           i()
-       }, [value])
-    */
     async function poistaKysymys() {
         try {
             await axios.delete('http://localhost:8080/kysymys/poista', { data: { tenttiId: tenttiId, kysymys: kysymys.kysymys, userId: tenttiDatat.kayttaja.id } })
@@ -44,6 +31,7 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
 
     const poistaKuva = async () => {
         await axios.delete('http://localhost:8080/kysymys/poista-kuva', { data: { kysymysId: kysymys.id } })
+        setImages([])
         dispatch({
             type: 'POISTA_KUVA',
             payload: kysymys.id
@@ -72,13 +60,19 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
         formData.append('image', acceptedFiles[0])
         console.log('hello')
         await axios.post('http://localhost:8080/kysymys/lisaa-kuva', formData, { headers: { kysymysid: kysymys.id } })
+        const img = {}
+        img[kysymys.id] = formData['image']
+        dispatch({
+            type: 'LISAA_KUVA',
+            payload: img
+        })
         console.log('hello')
         acceptedFiles.map((file, index) => {
             const reader = new FileReader();
             reader.onload = function (e) {
                 setImages((prevState) => [
                     ...prevState,
-                    { id: index, src: e.target.result },
+                    { id: kysymys.id, src: e.target.result },
                 ]);
             };
             reader.readAsDataURL(file);
@@ -112,8 +106,8 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
             </p>
             {kayttaja === 1 && <DropBox onDrop={onDrop} />}
             <div className='container'>
-                <ShowImage images={images} />
-                {tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 && <img src={tenttiDatat?.kuvat?.find(img => Object.keys(img).includes(kysymys.id))[kysymys.id]} className='img' alt='kuva' />}
+                {images.length > 0 && <ShowImage images={images} />}
+                {images.length > 0 ? images[0].id !== kysymys.id && tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 && <img src={tenttiDatat?.kuvat?.find(img => Object.keys(img).includes(kysymys.id))[kysymys.id]} className='img' alt='kuva' /> : tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 && <img src={tenttiDatat?.kuvat?.find(img => Object.keys(img).includes(kysymys.id))[kysymys.id]} className='img' alt='kuva' />}
             </div>
             {kayttaja === 1 && (tenttiDatat?.kuvat?.filter(img => Object.keys(img).includes(kysymys.id)).length > 0 || images.length > 0) && <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => poistaKuva()} />}
             {

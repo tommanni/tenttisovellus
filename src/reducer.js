@@ -88,7 +88,7 @@ export function reducer(state, action) {
 
         case 'LISAA_KAYTTAJA':
             let tentit12 = { ...state, tallennetaanko: true, rekisteröidytään: false }
-            tentit12.kayttajat.push({ kayttajatunnus: action.payload.kayttajatunnus, salasana: action.payload.salasana, admin: action.payload.admin })
+            tentit12.kayttajat?.push({ kayttajatunnus: action.payload.kayttajatunnus, salasana: action.payload.salasana, admin: action.payload.admin })
             return tentit12
 
         case 'POISTA_KAYTTAJA':
@@ -131,9 +131,15 @@ export function reducer(state, action) {
             let tentit17 = { ...state, naytaOppilaat: false }
             return tentit17
 
+        case 'LISAA_KUVA':
+            let tentit21 = { ...state }
+            console.log(action.payload)
+            tentit21.kuvat.push(action.payload)
+            return tentit21
+
         case 'POISTA_KUVA':
             let tentit20 = { ...state }
-            tentit20.kuvat = tentit20.kuvat.filter(kuva => !Object.keys(kuva).includes(action.payload))
+            tentit20.kuvat = tentit20.kuvat.filter(kuva => Object.keys(kuva)[0] !== action.payload)
             return tentit20
 
         case 'ALUSTA_DATA':

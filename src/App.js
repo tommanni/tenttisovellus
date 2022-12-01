@@ -24,10 +24,10 @@ const App = () => {
           const tenttiId = localStorage.getItem('tenttiId')
           result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja, tenttiId: tenttiId } });
           dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
-        } /* else {
+        } else {
           result = await axios.get('http://localhost:8080/tentti/offline-data', { params: { kayttaja: kayttaja } });
           dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
-        } */
+        }
       }
       getData()
     } catch (error) {
