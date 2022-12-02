@@ -22,11 +22,28 @@ const App = () => {
         const kayttaja = JSON.parse(localStorage.getItem('kayttaja'))
         if (kayttaja?.kirjauduttu) {
           const tenttiId = localStorage.getItem('tenttiId')
-          result = await axios.get('http://localhost:8080/tentti', { params: { kayttaja: kayttaja, tenttiId: tenttiId } });
-          dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
+          result = await axios.get('http://localhost:8080/tentti', {
+            params: {
+              kayttaja: kayttaja,
+              tenttiId: tenttiId
+            }
+          });
+          dispatch({
+            type: "ALUSTA_DATA",
+            payload: {
+              data: result.data,
+              setValue: setValue
+            }
+          })
         } else {
           result = await axios.get('http://localhost:8080/tentti/offline-data', { params: { kayttaja: kayttaja } });
-          dispatch({ type: "ALUSTA_DATA", payload: { data: result.data, setValue: setValue } })
+          dispatch({
+            type: "ALUSTA_DATA",
+            payload: {
+              data: result.data,
+              setValue: setValue
+            }
+          })
         }
       }
       getData()
@@ -47,9 +64,20 @@ const App = () => {
   const oikeatVastaukset = async (tenttiId) => {
     console.log(tenttiDatat.kayttaja)
     setVastaukset(1)
-    const tulos = await axios.get('http://localhost:8080/kayttaja/hae-tulos', { params: { tenttiId: tenttiId, kayttajaId: tenttiDatat.kayttaja.id } })
+    const tulos = await axios.get('http://localhost:8080/kayttaja/hae-tulos', {
+      params: {
+        tenttiId: tenttiId,
+        kayttajaId: tenttiDatat.kayttaja.id
+      }
+    })
     alert(`Sait arvosanan ${tulos.data.arvosana < 5 ? 'hylätty' : tulos.data.arvosana} (${Number(tulos.data.valitutPisteet)}/${tulos.data.maxPisteet})`)
-    setTimeout(() => dispatch({ type: 'POISTA_TENTTI', payload: { tenttiId: tenttiId, setToValue: setToValue } }), 10000);
+    setTimeout(() => dispatch({
+      type: 'POISTA_TENTTI',
+      payload: {
+        tenttiId: tenttiId,
+        setToValue: setToValue
+      }
+    }), 10000);
   }
 
   return (

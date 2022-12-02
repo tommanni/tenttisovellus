@@ -82,22 +82,19 @@ const Kysymys = ({ kysymys, kysymysNimi, tenttiId, kysymysIndex }) => {
 
     return (
         <div className='kysymys'>
-            <p className='kysymysTeksti'><b>{kysymysNimi}</b>{kayttaja === 1 && <input type="text" placeholder=' vaihda kysymys' onChange={(event) => {
+            <p className='kysymysTeksti'><b>{kysymysNimi}</b>{kayttaja === 1 && <input type="text" placeholder=' vaihda kysymys' onChange={async (event) => {
                 try {
-                    const muutaKysymyksenNimi = async (tenttiId, kysymysId, nimi) => {
-                        await axios.put('http://localhost:8080/kysymys/nimi-muuttui', { tenttiId: tenttiId, kysymysId: kysymysId, nimi: nimi })
-                        dispatch({
-                            type: "KYSYMYKSEN_NIMI_MUUTTUI",
-                            payload: {
-                                nimi: event.target.value,
-                                tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
-                                tenttiId: tenttiId,
-                                kysymysIndex: kysymysIndex,
-                                kysymysId: kysymys.id
-                            }
-                        })
-                    }
-                    muutaKysymyksenNimi(tenttiId, kysymys.id, event.target.value)
+                    await axios.put('http://localhost:8080/kysymys/nimi-muuttui', { tenttiId: tenttiId, kysymysId: kysymys.id, nimi: event.target.value })
+                    dispatch({
+                        type: "KYSYMYKSEN_NIMI_MUUTTUI",
+                        payload: {
+                            nimi: event.target.value,
+                            tenttiIndex: tentit.findIndex(tentti => tentti.id === tenttiId),
+                            tenttiId: tenttiId,
+                            kysymysIndex: kysymysIndex,
+                            kysymysId: kysymys.id
+                        }
+                    })
                 } catch (err) {
                     console.log(err)
                 }

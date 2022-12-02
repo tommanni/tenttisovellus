@@ -63,30 +63,26 @@ const Tentit = () => {
     return (
         <div className='tentit'>
             {tentit.map((tentti) =>
-                <>
+                <div className='tentti'>
                     <Button style={{ color: '#fff' }} key={tentti.id}
                         onClick={() => setToValue(tentti.id)}>{tentti.nimi}</Button>
-                    {kayttaja === 1 ? <input key={tentti.nimi} placeholder=' vaihda tentin nimi' type="text" onChange={(event) => {
-                        const muutaTentinNimi = async (tenttiId, nimi) => {
-                            try {
-                                await axios.put('http://localhost:8080/tentti/nimi-muuttui', { tenttiId: tenttiId, nimi: nimi })
-                                dispatch({
-                                    type: "TENTIN_NIMI_MUUTTUI",
-                                    payload: {
-                                        nimi: event.target.value,
-                                        tentinIndex: tentit.findIndex(tentti1 => tentti1.id === tentti.id),
-                                        tentinId: tentti.id
-                                    }
-                                })
-                            } catch (err) {
-                                console.log(err)
-                            }
+                    {kayttaja === 1 ? <input key={tentti.id + 10000} placeholder=' vaihda tentin nimi' type="text" onChange={async (event) => {
+                        try {
+                            await axios.put('http://localhost:8080/tentti/nimi-muuttui', { tenttiId: tentti.id, nimi: event.target.value })
+                            dispatch({
+                                type: "TENTIN_NIMI_MUUTTUI",
+                                payload: {
+                                    nimi: event.target.value,
+                                    tentinIndex: tentit.findIndex(tentti1 => tentti1.id === tentti.id),
+                                    tentinId: tentti.id
+                                }
+                            })
+                        } catch (err) {
+                            console.log(err)
                         }
-                        muutaTentinNimi(tentti.id, event.target.value)
-
                     }} /> : ""}
                     {kayttaja === 1 ? <Button key={tentti.id + 100} style={{ color: '#fff' }} startIcon={<DeleteIcon />} onClick={() => poistaTentti(tentti.nimi, tentti.id)} /> : ""}
-                </>
+                </div>
             )
             }
             {kayttaja === 1 && <Button startIcon={<AddCircleIcon />} style={{ color: '#fff' }} onClick={() => lisaaTentti()}>LISÄÄ TENTTI</Button>}
