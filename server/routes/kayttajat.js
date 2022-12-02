@@ -18,8 +18,17 @@ router.post('/token', async (req, res) => {
     if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
     jwt.verify(refreshToken, process.env.REFRESH_ACCESS_TOKEN_SECRET, (err, user) => {
         //if (err) return res.status(403).send(err)
-        const accessToken = jwt.sign({ userId: user.userId, kayttajatunnus: user.kayttajatunnus }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" })
-        res.json({ token: accessToken })
+        const accessToken = jwt.sign({
+            userId: user.userId,
+            kayttajatunnus: user.kayttajatunnus
+        },
+            process.env.ACCESS_TOKEN_SECRET,
+            {
+                expiresIn: "1h"
+            })
+        res.json({
+            token: accessToken
+        })
     })
 })
 
@@ -29,10 +38,23 @@ router.post('/kirjaudu', async (req, res, next) => {
     let existingUser;
     let passwordMatch = false
     try {
-        let result = await pool.query("select * from käyttäjä where kayttajatunnus=$1", [kayttaja.kayttajatunnus])
-        existingUser = { salasana: result.rows[0].salasana, kayttajatunnus: result.rows[0].kayttajatunnus, id: result.rows[0].id }
-        passwordMatch = await bcrypt.compare(kayttaja.salasana, existingUser.salasana)
-        await pool.query('UPDATE käyttäjä SET kirjauduttu = true WHERE id = ($1)', [kayttaja.id])
+        let result = await pool.query(
+            "select * from käyttäjä where kayttajatunnus=$1",
+            [kayttaja.kayttajatunnus]
+        )
+        existingUser = {
+            salasana: result.rows[0].salasana,
+            kayttajatunnus: result.rows[0].kayttajatunnus,
+            id: result.rows[0].id
+        }
+        passwordMatch = await bcrypt.compare(
+            kayttaja.salasana,
+            existingUser.salasana
+        )
+        await pool.query(
+            'UPDATE käyttäjä SET kirjauduttu = true WHERE id = ($1)',
+            [kayttaja.id]
+        )
     } catch (err) {
         res.status(500).send('Kirjautuminen epäonnistui')
         return next(err)
@@ -44,16 +66,23 @@ router.post('/kirjaudu', async (req, res, next) => {
     let token;
     let refreshToken
     try {
-        token = jwt.sign(
-            { userId: existingUser.id, kayttajatunnus: existingUser.kayttajatunnus },
+        token = jwt.sign({
+            userId: existingUser.id,
+            kayttajatunnus: existingUser.kayttajatunnus
+        },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: '1h' }
         )
-        refreshToken = jwt.sign(
-            { userId: existingUser.id, kayttajatunnus: existingUser.kayttajatunnus },
+        refreshToken = jwt.sign({
+            userId: existingUser.id,
+            kayttajatunnus: existingUser.kayttajatunnus
+        },
             process.env.REFRESH_ACCESS_TOKEN_SECRET
         )
-        await pool.query('INSERT INTO refresh_token (token) VALUES ($1)', [refreshToken])
+        await pool.query(
+            'INSERT INTO refresh_token (token) VALUES ($1)',
+            [refreshToken]
+        )
     } catch (err) {
         const error = new Error("Error! Something went wrong.");
         return next(error);
@@ -78,7 +107,10 @@ router.post('/lisaa', async (req, res, next) => {
     try {
         const hashed = await bcrypt.hash(salasana, saltRounds)
         await pool.query('BEGIN')
-        result = await pool.query('INSERT INTO käyttäjä (kayttajatunnus, salasana, admin, kirjauduttu) VALUES ($1, $2, -1, false) RETURNING id', [kayttajatunnus, hashed])
+        result = await pool.query(
+            'INSERT INTO käyttäjä (kayttajatunnus, salasana, admin, kirjauduttu) VALUES ($1, $2, -1, false) RETURNING id',
+            [kayttajatunnus, hashed]
+        )
         await pool.query('COMMIT')
     } catch (err) {
         res.status(500).send('Käyttäjän lisäys epäonnistui')
@@ -86,8 +118,10 @@ router.post('/lisaa', async (req, res, next) => {
     }
     let token;
     try {
-        token = jwt.sign(
-            { userId: result.rows[0].id, kayttajatunnus: kayttajatunnus },
+        token = jwt.sign({
+            userId: result.rows[0].id,
+            kayttajatunnus: kayttajatunnus
+        },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: "1h" }
         )
@@ -109,11 +143,17 @@ router.post('/lisaa', async (req, res, next) => {
 
 router.get('/hae', async (req, res) => {
     try {
-        const kayttaja = await pool.query('SELECT * FROM käyttäjä WHERE kayttajatunnus = $1', [req.query.kayttajatunnus])
+        const kayttaja = await pool.query(
+            'SELECT * FROM käyttäjä WHERE kayttajatunnus = $1',
+            [req.query.kayttajatunnus]
+        )
         if (kayttaja.rows.length === 0) {
             return res.send({ kayttaja: undefined })
         }
-        let passwordMatch = await bcrypt.compare(req.query.salasana, kayttaja.rows[0].salasana)
+        let passwordMatch = await bcrypt.compare(
+            req.query.salasana,
+            kayttaja.rows[0].salasana
+        )
         if (!passwordMatch) {
             return res.send('fail')
         }

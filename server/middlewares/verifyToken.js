@@ -5,7 +5,10 @@ const verifyToken = (req, res, next) => {
     console.log('helo')
     //Authorization: 'Bearer TOKEN'
     if (!token) {
-        res.status(200).json({ success: false, message: "Error!Token was not provided." });
+        res.status(200).json({
+            success: false,
+            message: "Error!Token was not provided."
+        });
     }
     //Decoding the token
     let decodedToken;
