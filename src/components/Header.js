@@ -33,6 +33,7 @@ const Header = () => {
                 let newToken = await axios.post('http://localhost:8080/kayttaja/token',
                     { token: tokens.refreshToken }
                 )
+                localStorage.removeItem(tenttiDatat.kayttaja.kayttajatunnus);
                 localStorage.setItem(
                     tenttiDatat.kayttaja.kayttajatunnus,
                     { token: newToken.data.token, refreshToken: tokens.refreshToken }

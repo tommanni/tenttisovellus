@@ -15,6 +15,33 @@ const App = () => {
   const [value, setValue] = useState({})
   const [vastaukset, setVastaukset] = useState(0)
 
+  axios.interceptors.request.use(function (config) {
+
+    // spinning start to show
+    // UPDATE: Add this code to show global loading indicator
+    document.body.classList.add('loading-indicator');
+
+    const token = window.localStorage.token;
+    console.log(token)
+    if (token) {
+      config.headers.Authorization = `token ${token}`
+    }
+    return config
+  }, function (error) {
+    return Promise.reject(error);
+  });
+
+  axios.interceptors.response.use(function (response) {
+
+    // spinning hide
+    // UPDATE: Add this code to hide global loading indicator
+    document.body.classList.remove('loading-indicator');
+
+    return response;
+  }, function (error) {
+    return Promise.reject(error);
+  });
+
   useEffect(() => {
     try {
       const getData = async () => {
@@ -64,12 +91,15 @@ const App = () => {
   const oikeatVastaukset = async (tenttiId) => {
     console.log(tenttiDatat.kayttaja)
     setVastaukset(1)
+
     const tulos = await axios.get('http://localhost:8080/kayttaja/hae-tulos', {
       params: {
         tenttiId: tenttiId,
-        kayttajaId: tenttiDatat.kayttaja.id
+        kayttajaId: tenttiDatat.kayttaja.id,
+        aika: new Date(Date.now()).toLocaleString()
       }
     })
+    console.log('helo')
     alert(`Sait arvosanan ${tulos.data.arvosana < 5 ? 'hylätty' : tulos.data.arvosana} (${Number(tulos.data.valitutPisteet)}/${tulos.data.maxPisteet})`)
     setTimeout(() => dispatch({
       type: 'POISTA_TENTTI',
@@ -94,7 +124,7 @@ const App = () => {
         {tenttiDatat.naytaOppilaat && tenttiDatat.kirjauduttu && <Oppilastiedot />}
         {tenttiDatat.tietoAlustettu && tenttiDatat.kirjauduttu && !tenttiDatat.naytaOppilaat && <Tentit />}
         <div className='kirjaudu'>
-          {!tenttiDatat.kirjauduttu && !tenttiDatat.rekisteröidytään && <Kirjaudu />}
+          {Object.values(value).length > 0 && !tenttiDatat.kirjauduttu && !tenttiDatat.rekisteröidytään && <Kirjaudu />}
           {!tenttiDatat.kirjauduttu && tenttiDatat.rekisteröidytään && <Rekisteröidy />}
         </div>
       </div>
