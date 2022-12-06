@@ -41,7 +41,6 @@ router.post('/lisaa-kuva', upload.single('image'), async (req, res) => {
 
 router.delete('/poista-kuva', async (req, res) => {
     try {
-        console.log('hello')
         fs.readdir('./images', function (err, fileNames) {
             if (fileNames?.includes(req.body.kysymysId)) {
                 fs.unlink(`./images/${req.body.kysymysId}`, (err => {

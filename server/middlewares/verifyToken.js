@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken')
 
 const verifyToken = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
-    console.log('helo')
     //Authorization: 'Bearer TOKEN'
     if (!token) {
         res.status(200).json({
@@ -16,7 +15,7 @@ const verifyToken = (req, res, next) => {
         decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     } catch (err) {
         console.log(err)
-        res.sendStatus(403)
+        return res.sendStatus(403)
     }
     req.decoded = decodedToken
     next()

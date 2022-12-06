@@ -41,7 +41,6 @@ router.get('/', /* verifyToken, */ async (req, res) => {
         let kuvat = []
         let files = fs.readdirSync('./images')
         files.forEach(file => {
-            console.log('helo')
             let data = fs.readFileSync(`./images/${file}`)
             const b64 = Buffer.from(data).toString('base64')
             console.log(b64.length)

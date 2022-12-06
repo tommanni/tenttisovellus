@@ -14,7 +14,6 @@ router.post('/token', async (req, res) => {
     if (refreshToken === null) return res.status(401).send('Tokenia ei tarjottu')
     let refreshTokenData = await pool.query('SELECT token FROM refresh_token')
     let refreshTokens = refreshTokenData.rows.map(token => token.token)
-    console.log('tokens', refreshTokens)
     if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
     jwt.verify(refreshToken, process.env.REFRESH_ACCESS_TOKEN_SECRET, (err, user) => {
         //if (err) return res.status(403).send(err)
@@ -24,7 +23,7 @@ router.post('/token', async (req, res) => {
         },
             process.env.ACCESS_TOKEN_SECRET,
             {
-                expiresIn: "1h"
+                expiresIn: "600s"
             })
         res.json({
             token: accessToken
@@ -71,7 +70,7 @@ router.post('/kirjaudu', async (req, res, next) => {
             kayttajatunnus: existingUser.kayttajatunnus
         },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: "600s" }
         )
         refreshToken = jwt.sign({
             userId: existingUser.id,
@@ -196,19 +195,18 @@ router.get('/hae-tulos', async (req, res) => {
         console.log(maxPisteet.rows)
         const valitutPisteet = await pool.query('SELECT COUNT(*) FROM answer WHERE id IN (SELECT answer_id FROM user_answer WHERE user_id = ($1) AND exam_id = ($2)) AND oikein = true', [req.query.kayttajaId, req.query.tenttiId])
         const arvosana = Math.round(valitutPisteet.rows[0].count / maxPisteet.rows[0].count * 10)
-        await pool.query('INSERT INTO finished_exam (user_id, exam_id, grade) VALUES ($1, $2, $3)', [req.query.kayttajaId, req.query.tenttiId, arvosana])
+        await pool.query('INSERT INTO finished_exam (user_id, exam_id, grade, date) VALUES ($1, $2, $3, $4)', [req.query.kayttajaId, req.query.tenttiId, arvosana, req.query.aika])
         console.log(arvosana)
         res.status(200).send({ maxPisteet: maxPisteet.rows[0].count, valitutPisteet: valitutPisteet.rows[0].count, arvosana: arvosana })
     } catch (err) {
+        console.log(err)
         res.status(500).send('Tuloksen haku epäonnistui')
     }
 })
 
 router.get('/hae-suoritus', verifyToken, isAdmin, async (req, res) => {
     try {
-        console.log('sadfasdfdas')
-        const suoritetut = await pool.query('SELECT (SELECT nimi FROM exam WHERE id = F.exam_id), grade FROM finished_exam F WHERE user_id = ($1)', [req.headers.kayttajaid])
-        console.log(suoritetut.rows)
+        const suoritetut = await pool.query('SELECT (SELECT nimi FROM exam WHERE id = F.exam_id), grade, date FROM finished_exam F WHERE user_id = ($1)', [req.headers.kayttajaid])
         const suorittamattomat = await pool.query('SELECT nimi FROM exam WHERE NOT id in (SELECT exam_id FROM finished_exam WHERE user_id = ($1))', [req.headers.kayttajaid])
         res.status(200).send({ suoritetut: suoritetut.rows, suorittamattomat: suorittamattomat.rows })
     } catch (err) {
@@ -218,7 +216,6 @@ router.get('/hae-suoritus', verifyToken, isAdmin, async (req, res) => {
 
 router.post('/aseta-valinta', verifyToken, async (req, res) => {
     try {
-        console.log('req', req.headers)
         await pool.query('BEGIN')
         if (!req.body.valinta) {
             await pool.query('INSERT INTO user_answer (id, user_id, answer_id, question_id, exam_id) OVERRIDING SYSTEM VALUE VALUES (COALESCE((SELECT MAX(id) + 1 FROM user_answer), 1), $1, $2, $3, $4)', [req.headers.kayttajaid, req.headers.vastausid, req.headers.kysymysid, req.headers.tenttiid])

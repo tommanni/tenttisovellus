@@ -2,7 +2,7 @@ const { pool } = require('../pool')
 
 const isAdmin = async (req, res, next) => {
     try {
-        let result = await pool.query("SELECT * FROM käyttäjä WHERE id = $1 ", [req.decoded?.userId])
+        let result = await pool.query("SELECT * FROM käyttäjä WHERE id = $1 ", [req.headers.admin])
         let admin = result.rows[0].admin
         if (admin !== 1) {
             res.status(401).send("no access!")
