@@ -2,9 +2,10 @@ import { useContext, useState } from 'react';
 import { TenttiContext } from '../App';
 import Filter from './Filter';
 import Oppilaat from './Oppilaat';
+import Oppilas from './Oppilas';
 
 const Oppilastiedot = () => {
-    const { kayttajat } = useContext(TenttiContext)
+    const { kayttajat, tenttiDatat, kayttaja } = useContext(TenttiContext)
 
     const [oppilaat, setOppilaat] = useState(kayttajat.filter(kayttaja => Number(kayttaja.admin) !== 1))
     const [filterNimi, setFilterNimi] = useState('')
@@ -21,11 +22,11 @@ const Oppilastiedot = () => {
 
     return (
         <div className='oppilaat'>
-            <Filter
+            {kayttaja === 1 && <Filter
                 value={filterNimi}
                 onChange={handleFilterNimiChange}
-            />
-            <Oppilaat oppilaat={filteroidytOppilaat} onClick={clickHandler} setOppilaat={setOppilaat} setFilter={setFilterNimi} />
+            />}
+            {kayttaja === 1 ? <Oppilaat oppilaat={filteroidytOppilaat} onClick={clickHandler} setOppilaat={setOppilaat} setFilter={setFilterNimi} /> : <Oppilas oppilas={tenttiDatat.kayttaja} />}
         </div>
     )
 }

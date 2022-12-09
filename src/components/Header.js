@@ -48,6 +48,10 @@ const Header = () => {
                     }
                 }
                 )
+                dispatch({
+                    type: 'POISTU',
+                    payload: tenttiDatat.kayttaja
+                })
             }
         }
     }
@@ -57,7 +61,7 @@ const Header = () => {
             <nav className='nav'>
                 <ul className='nav-items'>
                     <li className='tentteja'><Button onClick={() => dispatch({ type: 'NAYTATENTIT' })} style={{ color: '#fff' }} href="">TENTIT</Button></li>
-                    {kayttaja === 1 && kirjauduttu && <li ><Button onClick={() => dispatch({ type: 'NAYTAOPPILAAT' })} style={{ color: '#fff' }} href="">OPPILAAT</Button></li>}
+                    {kirjauduttu && <li ><Button onClick={() => dispatch({ type: 'NAYTAOPPILAAT' })} style={{ color: '#fff' }} href="">{kayttaja === 1 ? 'OPPILAAT' : 'SUORITUKSET'}</Button></li>}
                     <li className='tietoa'><Button style={{ color: '#fff' }} href="https://www.youtube.com/watch?v=sAqnNWUD79Q">TIETOA SOVELLUKSESTA</Button></li>
                     {kirjauduttu && <li className='poistu'><Button onClick={handlePoistuClick} style={{ color: "#fff" }} href="">POISTU</Button></li>}
                 </ul>

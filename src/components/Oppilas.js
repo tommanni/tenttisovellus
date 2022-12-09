@@ -38,7 +38,7 @@ const Oppilas = ({ oppilas, setOppilaat, setFilter }) => {
         const haeSuoritukset = async () => {
             try {
                 let suoritukset = await axios.get('http://localhost:8080/kayttaja/hae-suoritus', {
-                    "headers": {
+                    headers: {
                         'Authorization': `Bearer ${token.token}`,
                         'content-type': 'application/json',
                         kayttajaId: oppilas.id,
@@ -48,6 +48,7 @@ const Oppilas = ({ oppilas, setOppilaat, setFilter }) => {
                         kayttajaId: oppilas.id
                     }
                 })
+                console.log(suoritukset.data)
                 setSuoritukset(suoritukset.data)
             } catch (err) {
                 if (err.response.status === 403) {
@@ -57,7 +58,7 @@ const Oppilas = ({ oppilas, setOppilaat, setFilter }) => {
                     localStorage.removeItem(tenttiDatat.kayttaja.kayttajatunnus);
                     localStorage.setItem(tenttiDatat.kayttaja.kayttajatunnus, JSON.stringify({ token: newToken.data.token, refreshToken: tokens.refreshToken }))
                     let suoritukset = await axios.get('http://localhost:8080/kayttaja/hae-suoritus', {
-                        "headers": {
+                        headers: {
                             'Authorization': `Bearer ${newToken.data.token}`,
                             'content-type': 'application/json',
                             kayttajaId: oppilas.id,
@@ -77,7 +78,7 @@ const Oppilas = ({ oppilas, setOppilaat, setFilter }) => {
     return (
         <div>
             {/* //yksittäisen oppilaan tiedot */}
-            <h1>{oppilas.kayttajatunnus}<Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} className='poista-oppilas' onClick={() => poistaOppilas()} ></Button></h1>
+            <h1>{oppilas.kayttajatunnus}{tenttiDatat.kayttaja.admin === 1 && <Button style={{ color: '#fff' }} startIcon={<DeleteIcon />} className='poista-oppilas' onClick={() => poistaOppilas()} ></Button>}</h1>
             <h2>{'Suoritetut tentit'}</h2>
             <ol>
                 {suoritukset?.suoritetut?.length > 0 ? suoritukset.suoritetut.map(suoritus => <li key={suoritus.nimi} style={{ border: 'none' }}><div>{suoritus.nimi} {suoritus.grade > 4 ? suoritus.grade : 'Hylätty'} {suoritus.date}</div></li>) : 'Ei suoritettuja tenttejä'}
