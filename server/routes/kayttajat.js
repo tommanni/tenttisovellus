@@ -204,10 +204,11 @@ router.get('/hae-tulos', async (req, res) => {
     }
 })
 
-router.get('/hae-suoritus', verifyToken, isAdmin, async (req, res) => {
+router.get('/hae-suoritus', verifyToken, /* isAdmin, */ async (req, res) => {
     try {
         const suoritetut = await pool.query('SELECT (SELECT nimi FROM exam WHERE id = F.exam_id), grade, date FROM finished_exam F WHERE user_id = ($1)', [req.headers.kayttajaid])
         const suorittamattomat = await pool.query('SELECT nimi FROM exam WHERE NOT id in (SELECT exam_id FROM finished_exam WHERE user_id = ($1))', [req.headers.kayttajaid])
+        console.log(req.decoded)
         res.status(200).send({ suoritetut: suoritetut.rows, suorittamattomat: suorittamattomat.rows })
     } catch (err) {
         console.log(err)
